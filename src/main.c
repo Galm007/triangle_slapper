@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <pthread.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -16,6 +17,45 @@
 #define POPULATION     100
 #define BEST_CUTOFF    10
 
+#define THREADS 4
+
+struct ScoringData
+{
+	unsigned thread_index;
+
+	unsigned width, height;
+	unsigned char* input_img;
+	struct Color* current_img;
+
+	unsigned tri_count;
+	struct Triangle* triangles;
+	double* scores;
+};
+
+void* calculate_scores(void* args)
+{
+	struct ScoringData* data = (struct ScoringData*)args;
+
+	int start = data->tri_count * data->thread_index;
+
+	struct Color* test_img = (struct Color*) calloc(
+		data->width * data->height, sizeof(struct Color));
+
+	// calculate scores
+	for (int t = start; t < start + data->tri_count; ++t)
+	{
+		data->scores[t] = triangle_score(
+			&data->triangles[t],
+			data->input_img, data->current_img, test_img,
+			data->width, data->height);
+	}
+
+	free(test_img);
+	test_img = NULL;
+
+	pthread_exit(NULL);
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc != 2)
@@ -26,15 +66,11 @@ int main(int argc, char* argv[])
 
 	// seed for rand function
 	fast_srand(time(0));
-	
+
 	// load input image
 	int width, height, channels;
 	unsigned char* input_img = stbi_load(
-		argv[1],
-		&width,
-		&height,
-		&channels,
-		3);
+		argv[1], &width, &height, &channels, 3);
 	if (!input_img)
 	{
 		fprintf(stderr, "Failed to load image!\n");
@@ -44,31 +80,47 @@ int main(int argc, char* argv[])
 	// create empty image
 	struct Color* result = (struct Color*) calloc(
 		width * height, sizeof(struct Color));
-	struct Color* test_img = (struct Color*) calloc(
-		width * height, sizeof(struct Color));
-	
+
 	// genetic algorithm
 	struct Triangle tris[POPULATION];
 	double scores[POPULATION];
 
 	for (unsigned k = 0; k < 10000; ++k)
 	{
-		for (unsigned i = 0; i < POPULATION; ++i)
+		for (int i = 0; i < POPULATION; ++i)
 			triangle_init_random(tris + i, width, height);
 
-		for (unsigned g = 0; g < GENERATIONS; ++g)
+		for (int g = 0; g < GENERATIONS; ++g)
 		{
-			// calculate scores
-			for (int t = 0; t < POPULATION; ++t)
-				scores[t] = triangle_score(
-					tris + t,
-					input_img, result, test_img,
-					width, height);
+			pthread_t threads[THREADS];
+			struct ScoringData thread_data[THREADS];
+
+			// start threads
+			for (int i = 0; i < THREADS; ++i)
+			{
+				struct ScoringData* data = &thread_data[i];
+				data->thread_index = i;
+				data->width = width;
+				data->height = height;
+				data->input_img = input_img;
+				data->current_img = result;
+				data->tri_count = (POPULATION - (POPULATION % THREADS)) / THREADS;
+				data->triangles = tris;
+				data->scores = scores;
+
+				pthread_create(
+					&threads[i],
+					NULL,
+					calculate_scores,
+					data);
+			}
+			for (int i = 0; i < THREADS; ++i)
+				pthread_join(threads[i], NULL);
 
 			// sort triangles based on scores using bubble sort
 			// https://www.geeksforgeeks.org/bubble-sort/
-			for (unsigned i = 0; i < POPULATION - 1; i++)
-				for (unsigned j = 0; j < POPULATION - i - 1; j++)
+			for (int i = 0; i < POPULATION - 1; i++)
+				for (int j = 0; j < POPULATION - i - 1; j++)
 					if (scores[j] < scores[j + 1])
 					{
 						float ftmp = scores[j];
@@ -83,7 +135,7 @@ int main(int argc, char* argv[])
 			// create the next generation of triangles
 			// based on the best triangles of this generation
 			if (g < GENERATIONS - 1)
-				for (unsigned i = BEST_CUTOFF; i < POPULATION; ++i)
+				for (int i = BEST_CUTOFF; i < POPULATION; ++i)
 				{
 					tris[i] = tris[i % BEST_CUTOFF];
 					triangle_mutate(
@@ -92,6 +144,18 @@ int main(int argc, char* argv[])
 						height);
 				}
 		}
+
+		// do not draw the triangle if there is no improvement
+		if (scores[0] <= 0.0)
+		{
+			printf(
+				"Iteration %i did not improve! -- "
+				"score: %f\n"
+				"restarting iteration...\n",
+				k--, scores[0]);
+			continue;
+		}
+
 		draw_triangle(result, width, tris);
 
 		// write to image file
@@ -124,8 +188,6 @@ int main(int argc, char* argv[])
 	input_img = NULL;
 	free(result);
 	result = NULL;
-	free(test_img);
-	test_img = NULL;
 
 	return 0;
 }
