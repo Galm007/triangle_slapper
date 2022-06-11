@@ -11,78 +11,81 @@
 #include "fast_rand.h"
 #include "genetic_algorithm.h"
 
+#define	MAX_ITERATIONS 100000
+#define GENERATIONS    50
+#define POPULATION     100
+#define BEST_CUTOFF    10
+
 int main(int argc, char* argv[])
 {
+	if (argc != 2)
+	{
+		fprintf(stderr, "Only one argument should be passed!\n");
+		exit(1);
+	}
+
 	// seed for rand function
 	fast_srand(time(0));
 	
 	// load input image
 	int width, height, channels;
 	unsigned char* input_img = stbi_load(
-		"input.jpg",
+		argv[1],
 		&width,
 		&height,
 		&channels,
 		3);
 	if (!input_img)
 	{
-		printf("Failed to load image!\n");
+		fprintf(stderr, "Failed to load image!\n");
 		exit(1);
 	}
 	
 	// create empty image
 	struct Color* result = (struct Color*) calloc(
-		width * height,
-		sizeof(struct Color));
+		width * height, sizeof(struct Color));
 	struct Color* test_img = (struct Color*) calloc(
-		width * height,
-		sizeof(struct Color));
+		width * height, sizeof(struct Color));
 	
 	// genetic algorithm
-	const unsigned tricnt = 1000; // triangle count per generation
-	const unsigned gencnt = 30;  // generation count
-	
-	struct Triangle tris[tricnt];
-	double scores[tricnt];
+	struct Triangle tris[POPULATION];
+	double scores[POPULATION];
 
 	for (unsigned k = 0; k < 10000; ++k)
 	{
-		for (unsigned i = 0; i < tricnt; ++i)
+		for (unsigned i = 0; i < POPULATION; ++i)
 			triangle_init_random(tris + i, width, height);
-		
-		for (unsigned g = 0; g < gencnt; ++g)
+
+		for (unsigned g = 0; g < GENERATIONS; ++g)
 		{
 			// calculate scores
-			for (int t = 0; t < tricnt; ++t)
+			for (int t = 0; t < POPULATION; ++t)
 				scores[t] = triangle_score(
-						tris + t,
-						input_img,
-						result,
-						test_img,
-						width,
-						height);
-			
+					tris + t,
+					input_img, result, test_img,
+					width, height);
+
 			// sort triangles based on scores using bubble sort
 			// https://www.geeksforgeeks.org/bubble-sort/
-			for (unsigned i = 0; i < tricnt - 1; i++)
-			for (unsigned j = 0; j < tricnt - i - 1; j++)
-				if (scores[j] < scores[j + 1])
-				{
-					float ftmp = scores[j];
-					scores[j] = scores[j + 1];
-					scores[j + 1] = ftmp;
-					
-					struct Triangle ttmp = tris[j];
-					tris[j] = tris[j + 1];
-					tris[j + 1] = ttmp;
-				}
-			
+			for (unsigned i = 0; i < POPULATION - 1; i++)
+				for (unsigned j = 0; j < POPULATION - i - 1; j++)
+					if (scores[j] < scores[j + 1])
+					{
+						float ftmp = scores[j];
+						scores[j] = scores[j + 1];
+						scores[j + 1] = ftmp;
+						
+						struct Triangle ttmp = tris[j];
+						tris[j] = tris[j + 1];
+						tris[j + 1] = ttmp;
+					}
+
 			// create the next generation of triangles
 			// based on the best triangles of this generation
-			if (g < gencnt - 1)
-				for (unsigned i = 15; i < tricnt; ++i)
+			if (g < GENERATIONS - 1)
+				for (unsigned i = BEST_CUTOFF; i < POPULATION; ++i)
 				{
-					tris[i] = tris[i % 15];
+					tris[i] = tris[i % BEST_CUTOFF];
 					triangle_mutate(
 						tris + i,
 						width,
@@ -90,19 +93,19 @@ int main(int argc, char* argv[])
 				}
 		}
 		draw_triangle(result, width, tris);
-		
+
 		// write to image file
-		
+
 		unsigned char* output_img = (unsigned char*) calloc(
 			3 * width * height, 1);
-		
+
 		for (unsigned i = 0; i < width * height; ++i)
 		{
 			output_img[i * 3    ] = (unsigned char) result[i].r;
 			output_img[i * 3 + 1] = (unsigned char) result[i].g;
 			output_img[i * 3 + 2] = (unsigned char) result[i].b;
 		}
-		
+
 		char filename[16];
 		sprintf(filename, "output_%i.png", k);
 		stbi_write_png(
@@ -115,7 +118,7 @@ int main(int argc, char* argv[])
 		printf("output_%i.png -- score %f\n", k, scores[0]);
 		free(output_img);
 	}
-	
+
 	// deallocate stuff
 	stbi_image_free(input_img);
 	input_img = NULL;
@@ -123,6 +126,6 @@ int main(int argc, char* argv[])
 	result = NULL;
 	free(test_img);
 	test_img = NULL;
-	
+
 	return 0;
 }
