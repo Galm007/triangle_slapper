@@ -1,3 +1,5 @@
+// https://stackoverflow.com/a/26237777
+
 #include "fast_rand.h"
 
 static unsigned int g_seed;

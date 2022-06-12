@@ -5,7 +5,10 @@
 #include "triangle.h"
 #include "genetic_algorithm.h"
 
+#include "config.h"
+
 #define RANDF(n) ((float) (fast_rand() % (n)))
+#define ABS(n)   ((n) < 0.0f ? -(n) : (n))
 
 void triangle_init_random(
 	struct Triangle* tri,
@@ -31,29 +34,20 @@ void triangle_init_random(
 
 void mutate_position_x(float* f, unsigned scr_width)
 {
-	*f += RANDF(201) - 100.0f;
-	if (*f < 0.0f)
-		*f = 0.0f;
-	else if (*f > scr_width)
-		*f = scr_width;
+	*f += RANDF(MUTATION_AMOUNT_POS * 2 + 1) - MUTATION_AMOUNT_POS;
+	*f = *f < 0.0f ? 0.0f : *f > scr_width ? scr_width : *f;
 }
 
 void mutate_position_y(float* f, unsigned scr_height)
 {
-	*f += RANDF(201) - 100.0f;
-	if (*f < 0.0f)
-		*f = 0.0f;
-	else if (*f > scr_height)
-		*f = scr_height;
+	*f += RANDF(MUTATION_AMOUNT_POS * 2 + 1) - MUTATION_AMOUNT_POS;
+	*f = *f < 0.0f ? 0.0f : *f > scr_height ? scr_height : *f;
 }
 
 void mutate_color(float* f)
 {
-	*f += RANDF(101) - 50.0f;
-	if (*f > 255.0f)
-		*f = 255.0f;
-	else if (*f < 0.0f)
-		*f = 0.0f;
+	*f += RANDF(MUTATION_AMOUNT_CLR * 2 + 1) - MUTATION_AMOUNT_CLR;
+	*f = *f < 0.0f ? 0.0f : *f > 255.0f ? 255.0f : *f;
 }
 
 void triangle_mutate(
@@ -113,8 +107,6 @@ double triangle_score(
 	// calculate score
 	
 	double test_score = 0.0, crnt_score = 0.0;
-	
-#define ABS(n) ((n) < 0.0f ? -(n) : (n))
 	
 	for (unsigned y = ymin; y < ymax; ++y)
 		for (unsigned x = xmin; x < xmax; ++x)

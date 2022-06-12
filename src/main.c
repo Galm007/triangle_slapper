@@ -11,13 +11,7 @@
 
 #include "fast_rand.h"
 #include "genetic_algorithm.h"
-
-#define	MAX_ITERATIONS 100000
-#define GENERATIONS    50
-#define POPULATION     100
-#define BEST_CUTOFF    10
-
-#define THREADS 4
+#include "config.h"
 
 struct ScoringData
 {

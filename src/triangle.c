@@ -9,7 +9,7 @@ struct Edge
 	int x1, y1, x2, y2;
 };
 
-void edge_init(
+static void edge_init(
 	struct Edge* edge,
 	struct Color color1, int x1, int y1,
 	struct Color color2, int x2, int y2)
@@ -40,7 +40,7 @@ struct Span
 	int x1, x2;
 };
 
-void span_init(
+static void span_init(
 	struct Span* span,
 	struct Color color1, int x1,
 	struct Color color2, int x2)
@@ -61,7 +61,7 @@ void span_init(
 	}
 }
 
-void draw_span(
+static void draw_span(
 	struct Color* canvas,
 	unsigned canvas_width,
 	const struct Span* span,
@@ -86,7 +86,7 @@ void draw_span(
 	}
 }
 
-void draw_spans_between_edges(
+static void draw_spans_between_edges(
 	struct Color* canvas,
 	unsigned canvas_width,
 	const struct Edge* e1,
