@@ -133,6 +133,7 @@ void draw_triangle(
 	unsigned canvas_width,
 	struct Triangle* tri)
 {
+	// calculate edges
 	struct Edge edges[3];
 	edge_init(
 		edges,
@@ -159,6 +160,7 @@ void draw_triangle(
 		}
 	}
 	
+	// fill the triangle
 	int short_edge1 = (long_edge + 1) % 3;
 	int short_edge2 = (long_edge + 2) % 3;
 	draw_spans_between_edges(

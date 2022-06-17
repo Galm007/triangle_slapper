@@ -99,12 +99,12 @@ double triangle_score(
 	int sy2 = tri->y2;
 	int sy3 = tri->y3;
 	
-	int xmax = sx1 > sx2 ? (sx1 > sx3 ? sx1 : sx3) : (sx2 > sx3 ? sx2 : sx3);
-	int ymax = sy1 > sy2 ? (sy1 > sy3 ? sy1 : sy3) : (sy2 > sy3 ? sy2 : sy3);
-	int xmin = sx1 < sx2 ? (sx1 < sx3 ? sx1 : sx3) : (sx2 < sx3 ? sx2 : sx3);
-	int ymin = sy1 < sy2 ? (sy1 < sy3 ? sy1 : sy3) : (sy2 < sy3 ? sy2 : sy3);
+	int xmax = sx1 > sx2 ? sx1 > sx3 ? sx1 : sx3 : sx2 > sx3 ? sx2 : sx3;
+	int ymax = sy1 > sy2 ? sy1 > sy3 ? sy1 : sy3 : sy2 > sy3 ? sy2 : sy3;
+	int xmin = sx1 < sx2 ? sx1 < sx3 ? sx1 : sx3 : sx2 < sx3 ? sx2 : sx3;
+	int ymin = sy1 < sy2 ? sy1 < sy3 ? sy1 : sy3 : sy2 < sy3 ? sy2 : sy3;
 	
-	// calculate score
+	// calculate scores
 	
 	double test_score = 0.0, crnt_score = 0.0;
 	

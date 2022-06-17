@@ -13,6 +13,8 @@
 #include "genetic_algorithm.h"
 #include "config.h"
 
+#define THREAD_TRIS ((POPULATION - (POPULATION % THREADS)) / THREADS)
+
 struct ScoringData
 {
 	unsigned thread_index;
@@ -35,7 +37,6 @@ void* calculate_scores(void* args)
 	struct Color* test_img = (struct Color*) calloc(
 		data->width * data->height, sizeof(struct Color));
 
-	// calculate scores
 	for (int t = start; t < start + data->tri_count; ++t)
 	{
 		data->scores[t] = triangle_score(
@@ -48,6 +49,24 @@ void* calculate_scores(void* args)
 	test_img = NULL;
 
 	pthread_exit(NULL);
+}
+
+void write_img(char* name, struct Color* img, unsigned width, unsigned height)
+{
+	unsigned char* output_img = (unsigned char*) calloc(
+		3 * width * height, 1);
+
+	for (unsigned i = 0; i < width * height; ++i)
+	{
+		output_img[i * 3    ] = (unsigned char) img[i].r;
+		output_img[i * 3 + 1] = (unsigned char) img[i].g;
+		output_img[i * 3 + 2] = (unsigned char) img[i].b;
+	}
+
+	stbi_write_png(name, width, height, 3, output_img, 3 * width);
+
+	free(output_img);
+	output_img = NULL;
 }
 
 int main(int argc, char* argv[])
@@ -79,7 +98,7 @@ int main(int argc, char* argv[])
 	struct Triangle tris[POPULATION];
 	double scores[POPULATION];
 
-	for (unsigned k = 0; k < 10000; ++k)
+	for (unsigned k = 0; k < MAX_ITERATIONS; ++k)
 	{
 		for (int i = 0; i < POPULATION; ++i)
 			triangle_init_random(tris + i, width, height);
@@ -98,7 +117,7 @@ int main(int argc, char* argv[])
 				data->height = height;
 				data->input_img = input_img;
 				data->current_img = result;
-				data->tri_count = (POPULATION - (POPULATION % THREADS)) / THREADS;
+				data->tri_count = THREAD_TRIS;
 				data->triangles = tris;
 				data->scores = scores;
 
@@ -134,48 +153,34 @@ int main(int argc, char* argv[])
 					tris[i] = tris[i % BEST_CUTOFF];
 					triangle_mutate(
 						tris + i,
-						width,
-						height);
+						width, height);
 				}
 		}
 
-		// do not draw the triangle if there is no improvement
+		// restart the iteration if there is no improvement
 		if (scores[0] <= 0.0)
 		{
 			printf(
-				"Iteration %i did not improve! -- "
-				"score: %f\n"
-				"restarting iteration...\n",
-				k--, scores[0]);
+				"Iteration %i did not improve! "
+				"restarting iteration...\n", k--);
 			continue;
 		}
 
 		draw_triangle(result, width, tris);
 
-		// write to image file
-
-		unsigned char* output_img = (unsigned char*) calloc(
-			3 * width * height, 1);
-
-		for (unsigned i = 0; i < width * height; ++i)
-		{
-			output_img[i * 3    ] = (unsigned char) result[i].r;
-			output_img[i * 3 + 1] = (unsigned char) result[i].g;
-			output_img[i * 3 + 2] = (unsigned char) result[i].b;
-		}
-
+		// output the current generated image so far
 		char filename[16];
 		sprintf(filename, "output_%i.png", k);
-		stbi_write_png(
-			filename,
-			width,
-			height,
-			3,
-			output_img,
-			3 * width);
+		write_img(filename, result, width, height);
 		printf("output_%i.png -- score %f\n", k, scores[0]);
-		free(output_img);
 	}
+
+	/*
+	 * if progress images are created, then
+	 * simply rename the most recent one
+	 *
+	 * otherwise, output the final image
+	 */
 
 	// deallocate stuff
 	stbi_image_free(input_img);
