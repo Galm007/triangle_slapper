@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(Triangulator)
+project(TriangleSlapper)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB_RECURSE SRC_FILES src/*.c)
 
-add_executable(Triangulator ${SRC_FILES})
+add_executable(TriangleSlapper ${SRC_FILES})
 
 target_include_directories(
-	Triangulator PUBLIC
+	TriangleSlapper PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-target_link_libraries(Triangulator PRIVATE m)
+target_link_libraries(TriangleSlapper PRIVATE m)
