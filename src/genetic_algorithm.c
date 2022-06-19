@@ -21,6 +21,7 @@ void triangle_init_random(
 	tri->y2 = RANDF(scr_height);
 	tri->x3 = RANDF(scr_width );
 	tri->y3 = RANDF(scr_height);
+#ifdef INTERPOLATED_TRIANGLES
 	tri->color1.r = RANDF(256);
 	tri->color1.g = RANDF(256);
 	tri->color1.b = RANDF(256);
@@ -30,6 +31,17 @@ void triangle_init_random(
 	tri->color3.r = RANDF(256);
 	tri->color3.g = RANDF(256);
 	tri->color3.b = RANDF(256);
+#else
+	struct Color clr = {
+		.r = RANDF(256),
+		.g = RANDF(256),
+		.b = RANDF(256)
+	};
+
+	tri->color1 = clr;
+	tri->color2 = clr;
+	tri->color3 = clr;
+#endif
 }
 
 void mutate_position_x(float* f, unsigned scr_width)
@@ -61,6 +73,7 @@ void triangle_mutate(
 	mutate_position_y(&tri->y2, scr_height);
 	mutate_position_x(&tri->x3, scr_width);
 	mutate_position_y(&tri->y3, scr_height);
+#ifdef INTERPOLATED_TRIANGLES
 	mutate_color(&tri->color1.r);
 	mutate_color(&tri->color1.g);
 	mutate_color(&tri->color1.b);
@@ -70,6 +83,21 @@ void triangle_mutate(
 	mutate_color(&tri->color3.r);
 	mutate_color(&tri->color3.g);
 	mutate_color(&tri->color3.b);
+#else
+	struct Color clr = {
+		.r = tri->color1.r,
+		.g = tri->color1.g,
+		.b = tri->color1.b
+	};
+
+	mutate_color(&clr.r);
+	mutate_color(&clr.g);
+	mutate_color(&clr.b);
+
+	tri->color1 = clr;
+	tri->color2 = clr;
+	tri->color3 = clr;
+#endif
 }
 
 double triangle_score(

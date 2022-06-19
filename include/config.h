@@ -1,14 +1,17 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define THREADS 4
+#define THREADS 8
 
 #define MAX_ITERATIONS 1000
-#define GENERATIONS    50
+#define GENERATIONS    100
 #define POPULATION     400
-#define BEST_CUTOFF    10
+#define BEST_CUTOFF    20
 
-#define MUTATION_AMOUNT_POS 50
-#define MUTATION_AMOUNT_CLR 25
+#define MUTATION_AMOUNT_POS 30
+#define MUTATION_AMOUNT_CLR 20
+
+// comment this line out to disable interpolated triangles
+#define INTERPOLATED_TRIANGLES
 
 #endif
