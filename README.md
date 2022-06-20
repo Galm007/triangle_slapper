@@ -4,6 +4,8 @@ Slap triangles on top of each other to recreate an image
 
 The algorithm spawns random triangles, selects the best ones based on their calculated scores, and then creates the next generation by having different variants of the current best triangles. After a certain amount of generations, the best triangle is drawn into the final image and the cycle repeats.
 
+Note: This program does everything in cpu. So it will be slow compared to if it was hardware accelerated in gpu.
+
 ## Compiling
 This project uses cmake so the build process varies for different operating systems.
 
