@@ -15,12 +15,12 @@ cmake ..
 cmake --build .
 ```
 
-![](preview.gif)
-
 When running the program, it takes one argument for the path to the image that you want to be replicated.
 ```
 ./TriangleSlapper my_image.png
 ```
+
+![](./preview.gif)
 
 ## Configuration
 
