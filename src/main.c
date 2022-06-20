@@ -175,13 +175,6 @@ int main(int argc, char* argv[])
 		printf("output_%i.png -- score %f\n", k, scores[0]);
 	}
 
-	/*
-	 * if progress images are created, then
-	 * simply rename the most recent one
-	 *
-	 * otherwise, output the final image
-	 */
-
 	// deallocate stuff
 	stbi_image_free(input_img);
 	input_img = NULL;
