@@ -12,8 +12,10 @@ For Linux:
 git clone https://github.com/Nyaaboron/triangle_slapper.git && cd triangle_slapper
 mkdir build && cd build
 cmake ..
-make --build .
+cmake --build .
 ```
+
+![](preview.gif)
 
 When running the program, it takes one argument for the path to the image that you want to be replicated.
 ```
