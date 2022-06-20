@@ -23,6 +23,7 @@ When running the program, it takes one argument for the path to the image that y
 ```
 
 ![](./preview.gif)
+^^ Each iteration in this example took my laptop about a minute (Intel core i7 8th gen). It is not realtime.
 
 ## Configuration
 
