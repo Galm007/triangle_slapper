@@ -4,6 +4,8 @@ Slap triangles on top of each other to recreate an image
 
 The algorithm spawns random triangles, selects the best ones based on their calculated scores, and then creates the next generation by having different variants of the current best triangles. After a certain amount of generations, the best triangle is drawn into the final image and the cycle repeats.
 
+![](./preview.gif)
+
 Note: This program does everything in cpu. So it will be slow compared to if it was hardware accelerated in gpu.
 
 ## Compiling
@@ -22,8 +24,6 @@ When running the program, it takes one argument for the path to the image that y
 ./TriangleSlapper my_image.png
 ```
 
-![](./preview.gif)
-
 ## Configuration
 
 Configs can be changed by editing the macros in config.h and recompiling.
@@ -35,3 +35,6 @@ Configs can be changed by editing the macros in config.h and recompiling.
 * MUTATION_AMOUNT_POS - Maximum amount of change in a triangle's position per generation.
 * MUTATION_AMOUNT_CLR - Maximum amount of change in a triangle's color per generation.
 * INTERPOLATED_TRIANGLES - Use triangles with interpolated colors. Comment out this macro to use non-interpolated colors.
+
+For small images, it's better for MUTATION_AMOUNT_POS and MUTATION_AMOUNT_CLR to have smaller values.
+Higher values for GENERATIONS and POPULATION will produce better results but will take significantly longer time to finish an iteration.
