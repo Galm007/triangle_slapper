@@ -9,7 +9,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include "fast_rand.h"
+#include "color.h"
 #include "genetic_algorithm.h"
 #include "config.h"
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 	}
 
 	// seed for rand function
-	fast_srand(time(0));
+	srand(time(0));
 
 	// load input image
 	int width, height, channels;

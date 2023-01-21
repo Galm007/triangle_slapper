@@ -1,13 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "fast_rand.h"
 #include "triangle.h"
 #include "genetic_algorithm.h"
 
 #include "config.h"
 
-#define RANDF(n) ((float) (fast_rand() % (n)))
+#define RANDF(n) ((float) (rand() % (n)))
 #define ABS(n)   ((n) < 0.0f ? -(n) : (n))
 
 void triangle_init_random(
