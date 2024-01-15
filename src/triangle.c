@@ -12,8 +12,8 @@ struct Edge
 static void edge_init(
 	struct Edge* edge,
 	struct Color color1, int x1, int y1,
-	struct Color color2, int x2, int y2)
-{
+	struct Color color2, int x2, int y2
+) {
 	if (y1 < y2)
 	{
 		edge->color1 = color1;
@@ -43,8 +43,8 @@ struct Span
 static void span_init(
 	struct Span* span,
 	struct Color color1, int x1,
-	struct Color color2, int x2)
-{
+	struct Color color2, int x2
+) {
 	if (x1 < x2)
 	{
 		span->color1 = color1;
@@ -65,8 +65,8 @@ static void draw_span(
 	struct Color* canvas,
 	unsigned canvas_width,
 	const struct Span* span,
-	int y)
-{
+	int y
+) {
 	int xdiff = span->x2 - span->x1;
 	if (xdiff == 0)
 		return;
@@ -78,8 +78,7 @@ static void draw_span(
 	for (int x = span->x1; x < span->x2; ++x)
 	{
 		struct Color color = color_add(
-					span->color1,
-					color_scale(colordiff, factor));
+			span->color1, color_scale(colordiff, factor));
 		
 		canvas[y * canvas_width + x] = color;
 		factor += factor_step;
@@ -90,8 +89,8 @@ static void draw_spans_between_edges(
 	struct Color* canvas,
 	unsigned canvas_width,
 	const struct Edge* e1,
-	const struct Edge* e2)
-{
+	const struct Edge* e2
+) {
 	float e1_ydiff = (float)(e1->y2 - e1->y1);
 	float e2_ydiff = (float)(e2->y2 - e2->y1);
 	
@@ -115,12 +114,15 @@ static void draw_spans_between_edges(
 			&span,
 			color_add(
 				e1->color1,
-				color_scale(e1_colordiff, factor1)),
+				color_scale(e1_colordiff, factor1)
+			),
 			e1->x1 + (int)(e1_xdiff * factor1),
 			color_add(
 				e2->color1,
-				color_scale(e2_colordiff, factor2)),
-			e2->x1 + (int)(e2_xdiff * factor2));
+				color_scale(e2_colordiff, factor2)
+			),
+			e2->x1 + (int)(e2_xdiff * factor2)
+		);
 		draw_span(canvas, canvas_width, &span, y);
 		
 		factor1 += factor_step1;
@@ -131,22 +133,25 @@ static void draw_spans_between_edges(
 void draw_triangle(
 	struct Color* canvas,
 	unsigned canvas_width,
-	struct Triangle* tri)
-{
+	struct Triangle* tri
+) {
 	// calculate edges
 	struct Edge edges[3];
 	edge_init(
 		edges,
 		tri->color1, (int)tri->x1, (int)tri->y1,
-		tri->color2, (int)tri->x2, (int)tri->y2);
+		tri->color2, (int)tri->x2, (int)tri->y2
+	);
 	edge_init(
 		edges + 1,
 		tri->color2, (int)tri->x2, (int)tri->y2,
-		tri->color3, (int)tri->x3, (int)tri->y3);
+		tri->color3, (int)tri->x3, (int)tri->y3
+	);
 	edge_init(
 		edges + 2,
 		tri->color3, (int)tri->x3, (int)tri->y3,
-		tri->color1, (int)tri->x1, (int)tri->y1);
+		tri->color1, (int)tri->x1, (int)tri->y1
+	);
 	
 	// find edge with the greatest length in the y axis
 	int max_length = 0, long_edge = 0;
@@ -167,10 +172,12 @@ void draw_triangle(
 		canvas,
 		canvas_width,
 		edges + long_edge,
-		edges + short_edge1);
+		edges + short_edge1
+	);
 	draw_spans_between_edges(
 		canvas,
 		canvas_width,
 		edges + long_edge,
-		edges + short_edge2);
+		edges + short_edge2
+	);
 }

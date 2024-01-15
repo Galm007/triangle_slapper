@@ -15,52 +15,51 @@
 
 #define THREAD_TRIS ((POPULATION - (POPULATION % THREADS)) / THREADS)
 
+// TODO:
+// Update code style especially when breaking up long function calls
+// Use thread pools
+// Use struct Color* for input image instead of unsigned char*
+// Rename scr_width and scr_height to img_width and img_height
+// Add --continue argument
+
 struct ScoringData
 {
-	unsigned thread_index;
-
-	unsigned width, height;
-	unsigned char* input_img;
 	struct Color* current_img;
+	unsigned char* target_img;
+	unsigned width, height;
 
-	unsigned tri_count;
 	struct Triangle* triangles;
 	double* scores;
+	unsigned start_index;
 };
 
 void* calculate_scores(void* args)
 {
 	struct ScoringData* data = (struct ScoringData*)args;
 
-	int start = data->tri_count * data->thread_index;
-
-	struct Color* test_img = (struct Color*) calloc(
-		data->width * data->height, sizeof(struct Color));
-
-	for (int t = start; t < start + data->tri_count; ++t)
+	for (int i = 0; i < THREAD_TRIS; i++)
 	{
-		data->scores[t] = triangle_score(
-			&data->triangles[t],
-			data->input_img, data->current_img, test_img,
-			data->width, data->height);
+		data->scores[data->start_index + i] = triangle_score(
+			&data->triangles[data->start_index + i],
+			data->target_img,
+			data->current_img,
+			data->width,
+			data->height
+		);
 	}
-
-	free(test_img);
-	test_img = NULL;
 
 	pthread_exit(NULL);
 }
 
 void write_img(char* name, struct Color* img, unsigned width, unsigned height)
 {
-	unsigned char* output_img = (unsigned char*) calloc(
-		3 * width * height, 1);
+	unsigned char* output_img = calloc(width * height, 3);
 
-	for (unsigned i = 0; i < width * height; ++i)
+	for (unsigned i = 0; i < width * height; i++)
 	{
-		output_img[i * 3    ] = (unsigned char) img[i].r;
-		output_img[i * 3 + 1] = (unsigned char) img[i].g;
-		output_img[i * 3 + 2] = (unsigned char) img[i].b;
+		output_img[i * 3    ] = (unsigned char)img[i].r;
+		output_img[i * 3 + 1] = (unsigned char)img[i].g;
+		output_img[i * 3 + 2] = (unsigned char)img[i].b;
 	}
 
 	stbi_write_png(name, width, height, 3, output_img, 3 * width);
@@ -82,52 +81,51 @@ int main(int argc, char* argv[])
 
 	// load input image
 	int width, height, channels;
-	unsigned char* input_img = stbi_load(
+	unsigned char* target_img = stbi_load(
 		argv[1], &width, &height, &channels, 3);
-	if (!input_img)
+	if (!target_img)
 	{
 		fprintf(stderr, "Failed to load image!\n");
 		exit(1);
 	}
 	
 	// create empty image
-	struct Color* result = (struct Color*) calloc(
-		width * height, sizeof(struct Color));
+	struct Color* result = calloc(width * height, sizeof(struct Color));
 
 	// genetic algorithm
 	struct Triangle tris[POPULATION];
 	double scores[POPULATION];
 
-	for (unsigned k = 0; k < MAX_ITERATIONS; ++k)
+	for (unsigned k = 0; k < MAX_ITERATIONS; k++)
 	{
-		for (int i = 0; i < POPULATION; ++i)
-			triangle_init_random(tris + i, width, height);
+		for (int i = 0; i < POPULATION; i++)
+			triangle_init_random(&tris[i], width, height);
 
-		for (int g = 0; g < GENERATIONS; ++g)
+		for (int g = 0; g < GENERATIONS; g++)
 		{
 			pthread_t threads[THREADS];
 			struct ScoringData thread_data[THREADS];
 
 			// start threads
-			for (int i = 0; i < THREADS; ++i)
+			for (int i = 0; i < THREADS; i++)
 			{
 				struct ScoringData* data = &thread_data[i];
-				data->thread_index = i;
+				data->current_img = result;
+				data->target_img = target_img;
 				data->width = width;
 				data->height = height;
-				data->input_img = input_img;
-				data->current_img = result;
-				data->tri_count = THREAD_TRIS;
 				data->triangles = tris;
 				data->scores = scores;
+				data->start_index = THREAD_TRIS * i;
 
 				pthread_create(
 					&threads[i],
 					NULL,
 					calculate_scores,
-					data);
+					data
+				);
 			}
-			for (int i = 0; i < THREADS; ++i)
+			for (int i = 0; i < THREADS; i++)
 				pthread_join(threads[i], NULL);
 
 			// sort triangles based on scores using bubble sort
@@ -148,12 +146,14 @@ int main(int argc, char* argv[])
 			// create the next generation of triangles
 			// based on the best triangles of this generation
 			if (g < GENERATIONS - 1)
-				for (int i = BEST_CUTOFF; i < POPULATION; ++i)
+				for (int i = BEST_CUTOFF; i < POPULATION; i++)
 				{
 					tris[i] = tris[i % BEST_CUTOFF];
 					triangle_mutate(
 						tris + i,
-						width, height);
+						width,
+						height
+					);
 				}
 		}
 
@@ -162,22 +162,24 @@ int main(int argc, char* argv[])
 		{
 			printf(
 				"Iteration %i did not improve! "
-				"restarting iteration...\n", k--);
+				"restarting iteration...\n",
+				k--
+			);
 			continue;
 		}
-
-		draw_triangle(result, width, tris);
 
 		// output the current generated image so far
 		char filename[16];
 		sprintf(filename, "output_%i.png", k);
-		write_img(filename, result, width, height);
 		printf("output_%i.png -- score %f\n", k, scores[0]);
+
+		draw_triangle(result, width, tris);
+		write_img(filename, result, width, height);
 	}
 
 	// deallocate stuff
-	stbi_image_free(input_img);
-	input_img = NULL;
+	stbi_image_free(target_img);
+	target_img = NULL;
 	free(result);
 	result = NULL;
 

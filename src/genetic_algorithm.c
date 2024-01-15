@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -12,8 +13,8 @@
 void triangle_init_random(
 	struct Triangle* tri,
 	unsigned scr_width,
-	unsigned scr_height)
-{
+	unsigned scr_height
+) {
 	tri->x1 = RANDF(scr_width );
 	tri->y1 = RANDF(scr_height);
 	tri->x2 = RANDF(scr_width );
@@ -64,8 +65,8 @@ void mutate_color(float* f)
 void triangle_mutate(
 	struct Triangle* tri,
 	unsigned scr_width,
-	unsigned scr_height)
-{
+	unsigned scr_height
+) {
 	mutate_position_x(&tri->x1, scr_width);
 	mutate_position_y(&tri->y1, scr_height);
 	mutate_position_x(&tri->x2, scr_width);
@@ -99,61 +100,82 @@ void triangle_mutate(
 #endif
 }
 
+static double image_score_at(
+	unsigned char* target_img,
+	struct Color* img,
+	unsigned img_width,
+	unsigned xmin,
+	unsigned xmax,
+	unsigned ymin,
+	unsigned ymax
+) {
+	double score = 0.0;
+	for (unsigned y = ymin; y < ymax; ++y)
+		for (unsigned x = xmin; x < xmax; ++x)
+		{
+			const unsigned img_i = y * img_width + x;
+			const unsigned target_i = img_i * 3;
+
+			score += ABS(target_img[target_i] - img[img_i].r)
+				+ ABS(target_img[target_i + 1] - img[img_i].g)
+				+ ABS(target_img[target_i + 2] - img[img_i].b);
+		}
+	return 255.0f * (ymax - ymin) * (xmax - xmin) - score;
+}
+
 double triangle_score(
 	struct Triangle* tri,
 	unsigned char* target_img,
 	struct Color* current_img,
-	struct Color* test_img,
-	unsigned img_width,
-	unsigned img_height)
+	unsigned scr_width,
+	unsigned scr_height)
 {
 	// draw triangle on a test image
-	
+	struct Color* test_img = malloc(
+		scr_width * scr_height * sizeof(struct Color));
 	memcpy(
 		test_img,
 		current_img,
-		img_width * img_height * sizeof(struct Color));
-	
-	draw_triangle(test_img, img_width, tri);
+		scr_width * scr_height * sizeof(struct Color)
+	);
+	draw_triangle(test_img, scr_width, tri);
 	
 	// calculate bounding box of triangle
 	// https://stackoverflow.com/a/39974397
 	
-	int sx1 = tri->x1;
-	int sx2 = tri->x2;
-	int sx3 = tri->x3;
-	int sy1 = tri->y1;
-	int sy2 = tri->y2;
-	int sy3 = tri->y3;
-	
-	int xmax = sx1 > sx2 ? sx1 > sx3 ? sx1 : sx3 : sx2 > sx3 ? sx2 : sx3;
-	int ymax = sy1 > sy2 ? sy1 > sy3 ? sy1 : sy3 : sy2 > sy3 ? sy2 : sy3;
-	int xmin = sx1 < sx2 ? sx1 < sx3 ? sx1 : sx3 : sx2 < sx3 ? sx2 : sx3;
-	int ymin = sy1 < sy2 ? sy1 < sy3 ? sy1 : sy3 : sy2 < sy3 ? sy2 : sy3;
+	int xmin, xmax, ymin, ymax;
+	{
+		int x1 = tri->x1, x2 = tri->x2, x3 = tri->x3;
+		int y1 = tri->y1, y2 = tri->y2, y3 = tri->y3;
+
+		xmax = x1 > x2 ? x1 > x3 ? x1 : x3 : x2 > x3 ? x2 : x3;
+		ymax = y1 > y2 ? y1 > y3 ? y1 : y3 : y2 > y3 ? y2 : y3;
+		xmin = x1 < x2 ? x1 < x3 ? x1 : x3 : x2 < x3 ? x2 : x3;
+		ymin = y1 < y2 ? y1 < y3 ? y1 : y3 : y2 < y3 ? y2 : y3;
+	}
 	
 	// calculate scores
+	double test_score = image_score_at(
+		target_img,
+		test_img,
+		scr_width,
+		xmin,
+		xmax,
+		ymin,
+		ymax
+	);
+	double current_score = image_score_at(
+		target_img,
+		current_img,
+		scr_width,
+		xmin,
+		xmax,
+		ymin,
+		ymax
+	);
+
+	free(test_img);
+	test_img = NULL;
 	
-	double test_score = 0.0, crnt_score = 0.0;
-	
-	for (unsigned y = ymin; y < ymax; ++y)
-		for (unsigned x = xmin; x < xmax; ++x)
-		{
-			double test_diff, crnt_diff;
-			
-			const unsigned i = y * img_width + x;
-			const unsigned j = i * 3;
-			
-			test_diff = ABS(target_img[j    ] - test_img[i].r)
-			          + ABS(target_img[j + 1] - test_img[i].g)
-			          + ABS(target_img[j + 2] - test_img[i].b);
-			
-			crnt_diff = ABS(target_img[j    ] - current_img[i].r)
-			          + ABS(target_img[j + 1] - current_img[i].g)
-			          + ABS(target_img[j + 2] - current_img[i].b);
-			
-			test_score += 765.0 - test_diff;
-			crnt_score += 765.0 - crnt_diff;
-		}
-	
-	return test_score - crnt_score;
+	return test_score - current_score;
 }

@@ -15,6 +15,7 @@ struct Triangle
 void draw_triangle(
 	struct Color* canvas,
 	unsigned canvas_width,
-	struct Triangle* tri);
+	struct Triangle* tri
+);
 
 #endif
