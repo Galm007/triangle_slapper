@@ -8,19 +8,19 @@
 #include "config.h"
 
 #define RANDF(n) ((float) (rand() % (n)))
-#define ABS(n)   ((n) < 0.0f ? -(n) : (n))
 
 void triangle_init_random(
-	struct Triangle* tri,
-	unsigned scr_width,
-	unsigned scr_height
+	Triangle* tri,
+	unsigned img_width,
+	unsigned img_height
 ) {
-	tri->x1 = RANDF(scr_width );
-	tri->y1 = RANDF(scr_height);
-	tri->x2 = RANDF(scr_width );
-	tri->y2 = RANDF(scr_height);
-	tri->x3 = RANDF(scr_width );
-	tri->y3 = RANDF(scr_height);
+	tri->x1 = RANDF(img_width );
+	tri->y1 = RANDF(img_height);
+	tri->x2 = RANDF(img_width );
+	tri->y2 = RANDF(img_height);
+	tri->x3 = RANDF(img_width );
+	tri->y3 = RANDF(img_height);
+	
 #ifdef INTERPOLATED_TRIANGLES
 	tri->color1.r = RANDF(256);
 	tri->color1.g = RANDF(256);
@@ -32,7 +32,7 @@ void triangle_init_random(
 	tri->color3.g = RANDF(256);
 	tri->color3.b = RANDF(256);
 #else
-	struct Color clr = {
+	Color clr = {
 		.r = RANDF(256),
 		.g = RANDF(256),
 		.b = RANDF(256)
@@ -44,16 +44,16 @@ void triangle_init_random(
 #endif
 }
 
-void mutate_position_x(float* f, unsigned scr_width)
+void mutate_position_x(float* f, unsigned img_width)
 {
 	*f += RANDF(MUTATION_AMOUNT_POS * 2 + 1) - MUTATION_AMOUNT_POS;
-	*f = *f < 0.0f ? 0.0f : *f > scr_width ? scr_width : *f;
+	*f = *f < 0.0f ? 0.0f : *f > img_width ? img_width : *f;
 }
 
-void mutate_position_y(float* f, unsigned scr_height)
+void mutate_position_y(float* f, unsigned img_height)
 {
 	*f += RANDF(MUTATION_AMOUNT_POS * 2 + 1) - MUTATION_AMOUNT_POS;
-	*f = *f < 0.0f ? 0.0f : *f > scr_height ? scr_height : *f;
+	*f = *f < 0.0f ? 0.0f : *f > img_height ? img_height : *f;
 }
 
 void mutate_color(float* f)
@@ -63,16 +63,16 @@ void mutate_color(float* f)
 }
 
 void triangle_mutate(
-	struct Triangle* tri,
-	unsigned scr_width,
-	unsigned scr_height
+	Triangle* tri,
+	unsigned img_width,
+	unsigned img_height
 ) {
-	mutate_position_x(&tri->x1, scr_width);
-	mutate_position_y(&tri->y1, scr_height);
-	mutate_position_x(&tri->x2, scr_width);
-	mutate_position_y(&tri->y2, scr_height);
-	mutate_position_x(&tri->x3, scr_width);
-	mutate_position_y(&tri->y3, scr_height);
+	mutate_position_x(&tri->x1, img_width);
+	mutate_position_y(&tri->y1, img_height);
+	mutate_position_x(&tri->x2, img_width);
+	mutate_position_y(&tri->y2, img_height);
+	mutate_position_x(&tri->x3, img_width);
+	mutate_position_y(&tri->y3, img_height);
 #ifdef INTERPOLATED_TRIANGLES
 	mutate_color(&tri->color1.r);
 	mutate_color(&tri->color1.g);
@@ -84,7 +84,7 @@ void triangle_mutate(
 	mutate_color(&tri->color3.g);
 	mutate_color(&tri->color3.b);
 #else
-	struct Color clr = {
+	Color clr = {
 		.r = tri->color1.r,
 		.g = tri->color1.g,
 		.b = tri->color1.b
@@ -101,8 +101,8 @@ void triangle_mutate(
 }
 
 static double image_score_at(
-	unsigned char* target_img,
-	struct Color* img,
+	Color* target_img,
+	Color* img,
 	unsigned img_width,
 	unsigned xmin,
 	unsigned xmax,
@@ -113,36 +113,34 @@ static double image_score_at(
 	for (unsigned y = ymin; y < ymax; ++y)
 		for (unsigned x = xmin; x < xmax; ++x)
 		{
-			const unsigned img_i = y * img_width + x;
-			const unsigned target_i = img_i * 3;
+			const unsigned i = y * img_width + x;
 
-			score += ABS(target_img[target_i] - img[img_i].r)
-				+ ABS(target_img[target_i + 1] - img[img_i].g)
-				+ ABS(target_img[target_i + 2] - img[img_i].b);
+			score += fabsf(target_img[i].r - img[i].r)
+				+ fabsf(target_img[i].g - img[i].g)
+				+ fabsf(target_img[i].b - img[i].b);
 		}
 	return 255.0f * (ymax - ymin) * (xmax - xmin) - score;
 }
 
 double triangle_score(
-	struct Triangle* tri,
-	unsigned char* target_img,
-	struct Color* current_img,
-	unsigned scr_width,
-	unsigned scr_height)
+	Triangle* tri,
+	Color* target_img,
+	Color* current_img,
+	unsigned img_width,
+	unsigned img_height)
 {
 	// draw triangle on a test image
-	struct Color* test_img = malloc(
-		scr_width * scr_height * sizeof(struct Color));
+	Color* test_img = malloc(
+		img_width * img_height * sizeof(Color));
 	memcpy(
 		test_img,
 		current_img,
-		scr_width * scr_height * sizeof(struct Color)
+		img_width * img_height * sizeof(Color)
 	);
-	draw_triangle(test_img, scr_width, tri);
+	draw_triangle(test_img, img_width, tri);
 	
 	// calculate bounding box of triangle
 	// https://stackoverflow.com/a/39974397
-	
 	int xmin, xmax, ymin, ymax;
 	{
 		int x1 = tri->x1, x2 = tri->x2, x3 = tri->x3;
@@ -158,7 +156,7 @@ double triangle_score(
 	double test_score = image_score_at(
 		target_img,
 		test_img,
-		scr_width,
+		img_width,
 		xmin,
 		xmax,
 		ymin,
@@ -167,7 +165,7 @@ double triangle_score(
 	double current_score = image_score_at(
 		target_img,
 		current_img,
-		scr_width,
+		img_width,
 		xmin,
 		xmax,
 		ymin,

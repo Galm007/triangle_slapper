@@ -6,16 +6,15 @@
 
 #include "color.h"
 
-struct Triangle
-{
+typedef struct {
 	float x1, y1, x2, y2, x3, y3;
-	struct Color color1, color2, color3;
-};
+	Color color1, color2, color3;
+} Triangle;
 
 void draw_triangle(
-	struct Color* canvas,
+	Color* canvas,
 	unsigned canvas_width,
-	struct Triangle* tri
+	Triangle* tri
 );
 
 #endif

@@ -3,16 +3,15 @@
 
 #include "triangle.h"
 
-struct Edge
-{
-	struct Color color1, color2;
+typedef struct {
+	Color color1, color2;
 	int x1, y1, x2, y2;
-};
+} Edge;
 
 static void edge_init(
-	struct Edge* edge,
-	struct Color color1, int x1, int y1,
-	struct Color color2, int x2, int y2
+	Edge* edge,
+	Color color1, int x1, int y1,
+	Color color2, int x2, int y2
 ) {
 	if (y1 < y2)
 	{
@@ -36,14 +35,14 @@ static void edge_init(
 
 struct Span
 {
-	struct Color color1, color2;
+	Color color1, color2;
 	int x1, x2;
 };
 
 static void span_init(
 	struct Span* span,
-	struct Color color1, int x1,
-	struct Color color2, int x2
+	Color color1, int x1,
+	Color color2, int x2
 ) {
 	if (x1 < x2)
 	{
@@ -62,7 +61,7 @@ static void span_init(
 }
 
 static void draw_span(
-	struct Color* canvas,
+	Color* canvas,
 	unsigned canvas_width,
 	const struct Span* span,
 	int y
@@ -71,13 +70,13 @@ static void draw_span(
 	if (xdiff == 0)
 		return;
 	
-	struct Color colordiff = color_sub(span->color2, span->color1);
+	Color colordiff = color_sub(span->color2, span->color1);
 	float factor = 0.0f;
 	float factor_step = 1.0f / (float)xdiff;
 	
 	for (int x = span->x1; x < span->x2; ++x)
 	{
-		struct Color color = color_add(
+		Color color = color_add(
 			span->color1, color_scale(colordiff, factor));
 		
 		canvas[y * canvas_width + x] = color;
@@ -86,10 +85,10 @@ static void draw_span(
 }
 
 static void draw_spans_between_edges(
-	struct Color* canvas,
+	Color* canvas,
 	unsigned canvas_width,
-	const struct Edge* e1,
-	const struct Edge* e2
+	const Edge* e1,
+	const Edge* e2
 ) {
 	float e1_ydiff = (float)(e1->y2 - e1->y1);
 	float e2_ydiff = (float)(e2->y2 - e2->y1);
@@ -99,8 +98,8 @@ static void draw_spans_between_edges(
 	
 	float e1_xdiff = (float)(e1->x2 - e1->x1);
 	float e2_xdiff = (float)(e2->x2 - e2->x1);
-	struct Color e1_colordiff = color_sub(e1->color2, e1->color1);
-	struct Color e2_colordiff = color_sub(e2->color2, e2->color1);
+	Color e1_colordiff = color_sub(e1->color2, e1->color1);
+	Color e2_colordiff = color_sub(e2->color2, e2->color1);
 	
 	float factor1 = (float)(e2->y1 - e1->y1) / e1_ydiff;
 	float factor_step1 = 1.0f / e1_ydiff;
@@ -131,12 +130,12 @@ static void draw_spans_between_edges(
 }
 
 void draw_triangle(
-	struct Color* canvas,
+	Color* canvas,
 	unsigned canvas_width,
-	struct Triangle* tri
+	Triangle* tri
 ) {
 	// calculate edges
-	struct Edge edges[3];
+	Edge edges[3];
 	edge_init(
 		edges,
 		tri->color1, (int)tri->x1, (int)tri->y1,

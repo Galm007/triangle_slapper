@@ -1,10 +1,10 @@
 #ifndef __COLOR_H__
 #define __COLOR_H__
 
-struct Color { float r, g, b; };
+typedef struct { float r, g, b; } Color;
 
-struct Color color_add(struct Color a, struct Color b);
-struct Color color_sub(struct Color a, struct Color b);
-struct Color color_scale(struct Color a, float f);
+Color color_add(Color a, Color b);
+Color color_sub(Color a, Color b);
+Color color_scale(Color a, float f);
 
 #endif

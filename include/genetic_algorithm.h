@@ -4,23 +4,23 @@
 #include "triangle.h"
 
 void triangle_init_random(
-	struct Triangle* tri,
-	unsigned scr_width,
-	unsigned scr_height
+	Triangle* tri,
+	unsigned img_width,
+	unsigned img_height
 );
 
 void triangle_mutate(
-	struct Triangle* tri,
-	unsigned scr_width,
-	unsigned scr_height
+	Triangle* tri,
+	unsigned img_width,
+	unsigned img_height
 );
 
 double triangle_score(
-	struct Triangle* tri,
-	unsigned char* target_img,
-	struct Color* current_img,
-	unsigned scr_width,
-	unsigned scr_height
+	Triangle* tri,
+	Color* target_img,
+	Color* current_img,
+	unsigned img_width,
+	unsigned img_height
 );
 
 #endif

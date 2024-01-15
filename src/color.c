@@ -1,32 +1,29 @@
 #include "color.h"
 
-struct Color color_add(struct Color a, struct Color b)
+Color color_add(Color a, Color b)
 {
-	struct Color out = {
+	return (Color){
 		.r = a.r + b.r,
 		.g = a.g + b.g,
 		.b = a.b + b.b
 	};
-	return out;
 }
 
-struct Color color_sub(struct Color a, struct Color b)
+Color color_sub(Color a, Color b)
 {
-	struct Color out = {
+	return (Color){
 		.r = a.r - b.r,
 		.g = a.g - b.g,
 		.b = a.b - b.b
 	};
-	return out;
 }
 
-struct Color color_scale(struct Color a, float f)
+Color color_scale(Color a, float f)
 {
-	struct Color out = {
+	return (Color){
 		.r = a.r * f,
 		.g = a.g * f,
 		.b = a.b * f
 	};
-	return out;
 }
 

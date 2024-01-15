@@ -16,26 +16,23 @@
 #define THREAD_TRIS ((POPULATION - (POPULATION % THREADS)) / THREADS)
 
 // TODO:
-// Update code style especially when breaking up long function calls
 // Use thread pools
-// Use struct Color* for input image instead of unsigned char*
-// Rename scr_width and scr_height to img_width and img_height
 // Add --continue argument
+// Use size_t for loops
 
 struct ScoringData
 {
-	struct Color* current_img;
-	unsigned char* target_img;
+	Color *current_img, *target_img;
 	unsigned width, height;
 
-	struct Triangle* triangles;
+	Triangle* triangles;
 	double* scores;
 	unsigned start_index;
 };
 
 void* calculate_scores(void* args)
 {
-	struct ScoringData* data = (struct ScoringData*)args;
+	struct ScoringData* data = args;
 
 	for (int i = 0; i < THREAD_TRIS; i++)
 	{
@@ -51,8 +48,12 @@ void* calculate_scores(void* args)
 	pthread_exit(NULL);
 }
 
-void write_img(char* name, struct Color* img, unsigned width, unsigned height)
-{
+void write_img(
+	const char* name,
+	Color* img,
+	unsigned width,
+	unsigned height
+) {
 	unsigned char* output_img = calloc(width * height, 3);
 
 	for (unsigned i = 0; i < width * height; i++)
@@ -80,20 +81,35 @@ int main(int argc, char* argv[])
 	srand(time(0));
 
 	// load input image
-	int width, height, channels;
-	unsigned char* target_img = stbi_load(
-		argv[1], &width, &height, &channels, 3);
-	if (!target_img)
+	Color* target_img;
+	int width, height;
 	{
-		fprintf(stderr, "Failed to load image!\n");
-		exit(1);
+		int channels;
+		unsigned char* input_img = stbi_load(
+			argv[1], &width, &height, &channels, 3);
+		if (!input_img)
+		{
+			fprintf(stderr, "Failed to load image!\n");
+			exit(1);
+		}
+
+		target_img = malloc(width * height * sizeof(Color));
+		for (size_t i = 0; i < width * height; i++)
+		{
+			target_img[i].r = input_img[i * 3];
+			target_img[i].g = input_img[i * 3 + 1];
+			target_img[i].b = input_img[i * 3 + 2];
+		}
+
+		stbi_image_free(input_img);
+		input_img = NULL;
 	}
 	
 	// create empty image
-	struct Color* result = calloc(width * height, sizeof(struct Color));
+	Color* result = calloc(width * height, sizeof(Color));
 
 	// genetic algorithm
-	struct Triangle tris[POPULATION];
+	Triangle tris[POPULATION];
 	double scores[POPULATION];
 
 	for (unsigned k = 0; k < MAX_ITERATIONS; k++)
@@ -138,7 +154,7 @@ int main(int argc, char* argv[])
 						scores[j] = scores[j + 1];
 						scores[j + 1] = ftmp;
 						
-						struct Triangle ttmp = tris[j];
+						Triangle ttmp = tris[j];
 						tris[j] = tris[j + 1];
 						tris[j + 1] = ttmp;
 					}
@@ -177,11 +193,9 @@ int main(int argc, char* argv[])
 		write_img(filename, result, width, height);
 	}
 
-	// deallocate stuff
-	stbi_image_free(target_img);
-	target_img = NULL;
+	// cleanup
 	free(result);
-	result = NULL;
+	free(target_img);
 
 	return 0;
 }
