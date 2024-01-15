@@ -9,11 +9,8 @@
 
 #define RANDF(n) ((float) (rand() % (n)))
 
-void triangle_init_random(
-	Triangle* tri,
-	unsigned img_width,
-	unsigned img_height
-) {
+void triangle_init_random(Triangle* tri, int img_width, int img_height)
+{
 	tri->x1 = RANDF(img_width );
 	tri->y1 = RANDF(img_height);
 	tri->x2 = RANDF(img_width );
@@ -44,13 +41,13 @@ void triangle_init_random(
 #endif
 }
 
-void mutate_position_x(float* f, unsigned img_width)
+void mutate_position_x(float* f, int img_width)
 {
 	*f += RANDF(MUTATION_AMOUNT_POS * 2 + 1) - MUTATION_AMOUNT_POS;
 	*f = *f < 0.0f ? 0.0f : *f > img_width ? img_width : *f;
 }
 
-void mutate_position_y(float* f, unsigned img_height)
+void mutate_position_y(float* f, int img_height)
 {
 	*f += RANDF(MUTATION_AMOUNT_POS * 2 + 1) - MUTATION_AMOUNT_POS;
 	*f = *f < 0.0f ? 0.0f : *f > img_height ? img_height : *f;
@@ -62,11 +59,8 @@ void mutate_color(float* f)
 	*f = *f < 0.0f ? 0.0f : *f > 255.0f ? 255.0f : *f;
 }
 
-void triangle_mutate(
-	Triangle* tri,
-	unsigned img_width,
-	unsigned img_height
-) {
+void triangle_mutate(Triangle* tri, int img_width, int img_height)
+{
 	mutate_position_x(&tri->x1, img_width);
 	mutate_position_y(&tri->y1, img_height);
 	mutate_position_x(&tri->x2, img_width);
@@ -103,11 +97,11 @@ void triangle_mutate(
 static double image_score_at(
 	Color* target_img,
 	Color* img,
-	unsigned img_width,
-	unsigned xmin,
-	unsigned xmax,
-	unsigned ymin,
-	unsigned ymax
+	int img_width,
+	int xmin,
+	int xmax,
+	int ymin,
+	int ymax
 ) {
 	double score = 0.0;
 	for (unsigned y = ymin; y < ymax; ++y)
@@ -126,8 +120,8 @@ double triangle_score(
 	Triangle* tri,
 	Color* target_img,
 	Color* current_img,
-	unsigned img_width,
-	unsigned img_height)
+	int img_width,
+	int img_height)
 {
 	// draw triangle on a test image
 	Color* test_img = malloc(

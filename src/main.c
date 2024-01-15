@@ -18,21 +18,19 @@
 // TODO:
 // Use thread pools
 // Add --continue argument
-// Use size_t for loops
 
-struct ScoringData
-{
+typedef struct {
 	Color *current_img, *target_img;
-	unsigned width, height;
+	int width, height;
 
 	Triangle* triangles;
 	double* scores;
-	unsigned start_index;
-};
+	int start_index;
+} ScoringData;
 
 void* calculate_scores(void* args)
 {
-	struct ScoringData* data = args;
+	ScoringData* data = args;
 
 	for (int i = 0; i < THREAD_TRIS; i++)
 	{
@@ -51,12 +49,12 @@ void* calculate_scores(void* args)
 void write_img(
 	const char* name,
 	Color* img,
-	unsigned width,
-	unsigned height
+	int width,
+	int height
 ) {
 	unsigned char* output_img = calloc(width * height, 3);
 
-	for (unsigned i = 0; i < width * height; i++)
+	for (int i = 0; i < width * height; i++)
 	{
 		output_img[i * 3    ] = (unsigned char)img[i].r;
 		output_img[i * 3 + 1] = (unsigned char)img[i].g;
@@ -94,7 +92,7 @@ int main(int argc, char* argv[])
 		}
 
 		target_img = malloc(width * height * sizeof(Color));
-		for (size_t i = 0; i < width * height; i++)
+		for (int i = 0; i < width * height; i++)
 		{
 			target_img[i].r = input_img[i * 3];
 			target_img[i].g = input_img[i * 3 + 1];
@@ -112,7 +110,7 @@ int main(int argc, char* argv[])
 	Triangle tris[POPULATION];
 	double scores[POPULATION];
 
-	for (unsigned k = 0; k < MAX_ITERATIONS; k++)
+	for (int k = 0; k < MAX_ITERATIONS; k++)
 	{
 		for (int i = 0; i < POPULATION; i++)
 			triangle_init_random(&tris[i], width, height);
@@ -120,12 +118,12 @@ int main(int argc, char* argv[])
 		for (int g = 0; g < GENERATIONS; g++)
 		{
 			pthread_t threads[THREADS];
-			struct ScoringData thread_data[THREADS];
+			ScoringData thread_data[THREADS];
 
 			// start threads
 			for (int i = 0; i < THREADS; i++)
 			{
-				struct ScoringData* data = &thread_data[i];
+				ScoringData* data = &thread_data[i];
 				data->current_img = result;
 				data->target_img = target_img;
 				data->width = width;
@@ -134,15 +132,24 @@ int main(int argc, char* argv[])
 				data->scores = scores;
 				data->start_index = THREAD_TRIS * i;
 
-				pthread_create(
+				if (pthread_create(
 					&threads[i],
 					NULL,
 					calculate_scores,
 					data
-				);
+				))
+					printf(
+						"Failed to create thread %d!\n",
+						i
+					);
 			}
 			for (int i = 0; i < THREADS; i++)
-				pthread_join(threads[i], NULL);
+				if (pthread_join(threads[i], NULL))
+					printf(
+						"Failed to create join %d!\n",
+						i
+					);
+
 
 			// sort triangles based on scores using bubble sort
 			// https://www.geeksforgeeks.org/bubble-sort/

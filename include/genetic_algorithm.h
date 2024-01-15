@@ -5,22 +5,22 @@
 
 void triangle_init_random(
 	Triangle* tri,
-	unsigned img_width,
-	unsigned img_height
+	int img_width,
+	int img_height
 );
 
 void triangle_mutate(
 	Triangle* tri,
-	unsigned img_width,
-	unsigned img_height
+	int img_width,
+	int img_height
 );
 
 double triangle_score(
 	Triangle* tri,
 	Color* target_img,
 	Color* current_img,
-	unsigned img_width,
-	unsigned img_height
+	int img_width,
+	int img_height
 );
 
 #endif

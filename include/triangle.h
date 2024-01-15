@@ -13,7 +13,7 @@ typedef struct {
 
 void draw_triangle(
 	Color* canvas,
-	unsigned canvas_width,
+	int canvas_width,
 	Triangle* tri
 );
 
