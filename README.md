@@ -40,4 +40,4 @@ Configs can be changed by editing the macros in config.h and recompiling.
 
 For small images, it's better for MUTATION_AMOUNT_POS and MUTATION_AMOUNT_CLR to have smaller values.
 
-Higher values for GENERATIONS and POPULATION will produce better results but will take significantly longer time to finish an iteration.
+Higher values for GENERATIONS and THREAD_TRIS will produce better results but will take significantly longer time to finish an iteration.
