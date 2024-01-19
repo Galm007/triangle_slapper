@@ -11,13 +11,21 @@
 
 #include "color.h"
 #include "genetic_algorithm.h"
+#include "thread_sync.h"
 #include "config.h"
 
-#define THREAD_TRIS ((POPULATION - (POPULATION % THREADS)) / THREADS)
+#define POPULATION (THREADS * THREAD_TRIS)
 
-// TODO:
-// Use thread pools
-// Add --continue argument
+/* TODO:
+ * - Implement a quadtree for the triangle vertices to set initial triangle colors
+ * using downscaled versions of the target image
+ * - Dynamically adjust mutation amounts
+ * - Create a system for processing command line arguments
+ * - Allow overriding config values with command line arguments
+ * - Allow loading config files
+ * - Add --continue option
+ * - Add an option to use OpenCL for gpu accelerated triangle scoring
+ */
 
 typedef struct {
 	Color *current_img, *target_img;
@@ -25,25 +33,23 @@ typedef struct {
 
 	Triangle* triangles;
 	double* scores;
-	int start_index;
 } ScoringData;
 
-void* calculate_scores(void* args)
+void calculate_scores(void* args, int thread_i)
 {
 	ScoringData* data = args;
 
+	int start_index = THREAD_TRIS * thread_i;
 	for (int i = 0; i < THREAD_TRIS; i++)
 	{
-		data->scores[data->start_index + i] = triangle_score(
-			&data->triangles[data->start_index + i],
+		data->scores[start_index + i] = triangle_score(
+			&data->triangles[start_index + i],
 			data->target_img,
 			data->current_img,
 			data->width,
 			data->height
 		);
 	}
-
-	pthread_exit(NULL);
 }
 
 void write_img(
@@ -106,10 +112,23 @@ int main(int argc, char* argv[])
 	// create empty image
 	Color* result = calloc(width * height, sizeof(Color));
 
-	// genetic algorithm
+	// prepare thread data
 	Triangle tris[POPULATION];
 	double scores[POPULATION];
 
+	ScoringData data;
+	data.current_img = result;
+	data.target_img = target_img;
+	data.width = width;
+	data.height = height;
+	data.triangles = tris;
+	data.scores = scores;
+
+	// initialize threads
+	ThreadSync ts;
+	threadsync_init(&ts, calculate_scores, &data, THREADS);
+
+	// genetic algorithm
 	for (int k = 0; k < MAX_ITERATIONS; k++)
 	{
 		for (int i = 0; i < POPULATION; i++)
@@ -117,39 +136,8 @@ int main(int argc, char* argv[])
 
 		for (int g = 0; g < GENERATIONS; g++)
 		{
-			pthread_t threads[THREADS];
-			ScoringData thread_data[THREADS];
-
-			// start threads
-			for (int i = 0; i < THREADS; i++)
-			{
-				ScoringData* data = &thread_data[i];
-				data->current_img = result;
-				data->target_img = target_img;
-				data->width = width;
-				data->height = height;
-				data->triangles = tris;
-				data->scores = scores;
-				data->start_index = THREAD_TRIS * i;
-
-				if (pthread_create(
-					&threads[i],
-					NULL,
-					calculate_scores,
-					data
-				))
-					printf(
-						"Failed to create thread %d!\n",
-						i
-					);
-			}
-			for (int i = 0; i < THREADS; i++)
-				if (pthread_join(threads[i], NULL))
-					printf(
-						"Failed to create join %d!\n",
-						i
-					);
-
+			threadsync_dispatch(&ts);
+			threadsync_wait(&ts);
 
 			// sort triangles based on scores using bubble sort
 			// https://www.geeksforgeeks.org/bubble-sort/
@@ -201,6 +189,7 @@ int main(int argc, char* argv[])
 	}
 
 	// cleanup
+	threadsync_destroy(&ts);
 	free(result);
 	free(target_img);
 

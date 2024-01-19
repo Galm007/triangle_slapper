@@ -2,10 +2,10 @@
 #define __CONFIG_H__
 
 #define THREADS 8
+#define THREAD_TRIS 50
 
 #define MAX_ITERATIONS 1000
 #define GENERATIONS    100
-#define POPULATION     400
 #define BEST_CUTOFF    20
 
 #define MUTATION_AMOUNT_POS 30

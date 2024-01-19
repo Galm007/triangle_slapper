@@ -30,9 +30,9 @@ When running the program, it takes one argument for the path to the image that y
 
 Configs can be changed by editing the macros in config.h and recompiling.
 * THREADS - The number of cpu threads that the program will use.
+* THREAD_TRIS - The amount of triangles that each thread will process per generation.
 * MAX_ITERATIONS - The program will automatically stop after a certain number of iterations. Each iteration will produce a single triangle that will be drawn on the output image.
 * GENERATIONS - The number of generations per iteration.
-* POPULATION - The number of triangles per generation.
 * BEST_CUTOFF - The number of triangles that survive per generation. The next generation's population will be based on the current generation's survivors.
 * MUTATION_AMOUNT_POS - Maximum amount of change in a triangle's position per generation.
 * MUTATION_AMOUNT_CLR - Maximum amount of change in a triangle's color per generation.
