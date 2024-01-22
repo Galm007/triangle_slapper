@@ -17,8 +17,6 @@
 #define POPULATION (THREADS * THREAD_TRIS)
 
 /* TODO:
- * - Implement a quadtree for the triangle vertices to set initial triangle colors
- * using downscaled versions of the target image
  * - Dynamically adjust mutation amounts
  * - Create a system for processing command line arguments
  * - Allow overriding config values with command line arguments

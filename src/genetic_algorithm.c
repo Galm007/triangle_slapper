@@ -1,13 +1,12 @@
-#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include "triangle.h"
+#include <math.h>
+#include "config.h"
 #include "genetic_algorithm.h"
 
-#include "config.h"
-
 #define RANDF(n) ((float) (rand() % (n)))
+#define RANDF_RANGE(min, max) (RANDF((max - min) * 2) - (max - min))
 
 void triangle_init_random(Triangle* tri, int img_width, int img_height)
 {
@@ -41,42 +40,31 @@ void triangle_init_random(Triangle* tri, int img_width, int img_height)
 #endif
 }
 
-void mutate_position_x(float* f, int img_width)
+static void mutate(float* f, int max_mutation, int max_val)
 {
-	*f += RANDF(MUTATION_AMOUNT_POS * 2 + 1) - MUTATION_AMOUNT_POS;
-	*f = *f < 0.0f ? 0.0f : *f > img_width ? img_width : *f;
-}
-
-void mutate_position_y(float* f, int img_height)
-{
-	*f += RANDF(MUTATION_AMOUNT_POS * 2 + 1) - MUTATION_AMOUNT_POS;
-	*f = *f < 0.0f ? 0.0f : *f > img_height ? img_height : *f;
-}
-
-void mutate_color(float* f)
-{
-	*f += RANDF(MUTATION_AMOUNT_CLR * 2 + 1) - MUTATION_AMOUNT_CLR;
-	*f = *f < 0.0f ? 0.0f : *f > 255.0f ? 255.0f : *f;
+	*f += RANDF_RANGE(-max_mutation, max_mutation);
+	*f = fminf(fmaxf(0.0f, *f), max_val);
 }
 
 void triangle_mutate(Triangle* tri, int img_width, int img_height)
 {
-	mutate_position_x(&tri->x1, img_width);
-	mutate_position_y(&tri->y1, img_height);
-	mutate_position_x(&tri->x2, img_width);
-	mutate_position_y(&tri->y2, img_height);
-	mutate_position_x(&tri->x3, img_width);
-	mutate_position_y(&tri->y3, img_height);
+	mutate(&tri->x1, MUTATION_AMOUNT_POS, img_width);
+	mutate(&tri->y1, MUTATION_AMOUNT_POS, img_height);
+	mutate(&tri->x2, MUTATION_AMOUNT_POS, img_width);
+	mutate(&tri->y2, MUTATION_AMOUNT_POS, img_height);
+	mutate(&tri->x3, MUTATION_AMOUNT_POS, img_width);
+	mutate(&tri->y3, MUTATION_AMOUNT_POS, img_height);
+
 #ifdef INTERPOLATED_TRIANGLES
-	mutate_color(&tri->color1.r);
-	mutate_color(&tri->color1.g);
-	mutate_color(&tri->color1.b);
-	mutate_color(&tri->color2.r);
-	mutate_color(&tri->color2.g);
-	mutate_color(&tri->color2.b);
-	mutate_color(&tri->color3.r);
-	mutate_color(&tri->color3.g);
-	mutate_color(&tri->color3.b);
+	mutate(&tri->color1.r, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color1.g, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color1.b, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color2.r, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color2.g, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color2.b, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color3.r, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color3.g, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color3.b, MUTATION_AMOUNT_CLR, 255);
 #else
 	Color clr = {
 		.r = tri->color1.r,
@@ -84,9 +72,9 @@ void triangle_mutate(Triangle* tri, int img_width, int img_height)
 		.b = tri->color1.b
 	};
 
-	mutate_color(&clr.r);
-	mutate_color(&clr.g);
-	mutate_color(&clr.b);
+	mutate(&clr.r, MUTATION_AMOUNT_CLR, 255);
+	mutate(&clr.g, MUTATION_AMOUNT_CLR, 255);
+	mutate(&clr.b, MUTATION_AMOUNT_CLR, 255);
 
 	tri->color1 = clr;
 	tri->color2 = clr;
