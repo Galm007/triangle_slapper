@@ -14,14 +14,11 @@
 #include "thread_sync.h"
 #include "config.h"
 
-#define POPULATION (THREADS * THREAD_TRIS)
-
 /* TODO:
  * - Dynamically adjust mutation amounts
- * - Create a system for processing command line arguments
- * - Allow overriding config values with command line arguments
  * - Allow loading config files
  * - Add --continue option
+ * - Print errors to stderr instead of stdout
  * - Add an option to use OpenCL for gpu accelerated triangle scoring
  */
 
@@ -31,14 +28,16 @@ typedef struct {
 
 	Triangle* triangles;
 	double* scores;
+
+	Config* conf;
 } ScoringData;
 
 void calculate_scores(void* args, int thread_i)
 {
 	ScoringData* data = args;
 
-	int start_index = THREAD_TRIS * thread_i;
-	for (int i = 0; i < THREAD_TRIS; i++)
+	int start_index = data->conf->thread_tris * thread_i;
+	for (int i = 0; i < data->conf->thread_tris; i++)
 	{
 		data->scores[start_index + i] = triangle_score(
 			&data->triangles[start_index + i],
@@ -73,11 +72,10 @@ void write_img(
 
 int main(int argc, char* argv[])
 {
-	if (argc != 2)
-	{
-		fprintf(stderr, "Only one argument should be passed!\n");
-		exit(1);
-	}
+	Config conf;
+	if (!config_init_w_args(&conf, argc, argv))
+		return 1;
+	config_print(&conf);
 
 	// seed for rand function
 	srand(time(0));
@@ -88,7 +86,12 @@ int main(int argc, char* argv[])
 	{
 		int channels;
 		unsigned char* input_img = stbi_load(
-			argv[1], &width, &height, &channels, 3);
+			conf.input_img_path,
+			&width,
+			&height,
+			&channels,
+			3
+		);
 		if (!input_img)
 		{
 			fprintf(stderr, "Failed to load image!\n");
@@ -111,8 +114,9 @@ int main(int argc, char* argv[])
 	Color* result = calloc(width * height, sizeof(Color));
 
 	// prepare thread data
-	Triangle tris[POPULATION];
-	double scores[POPULATION];
+	int population = conf.threads * conf.thread_tris;
+	Triangle tris[population];
+	double scores[population];
 
 	ScoringData data;
 	data.current_img = result;
@@ -121,26 +125,34 @@ int main(int argc, char* argv[])
 	data.height = height;
 	data.triangles = tris;
 	data.scores = scores;
+	data.conf = &conf;
 
 	// initialize threads
 	ThreadSync ts;
-	threadsync_init(&ts, calculate_scores, &data, THREADS);
+	if (!threadsync_init(&ts, calculate_scores, &data, conf.threads))
+	{
+		fprintf(
+			stderr,
+			"Failed to initialize ThreadSync. Exiting...\n"
+		);
+		return 1;
+	}
 
 	// genetic algorithm
-	for (int k = 0; k < MAX_ITERATIONS; k++)
+	for (int k = 0; k < conf.max_iterations; k++)
 	{
-		for (int i = 0; i < POPULATION; i++)
+		for (int i = 0; i < population; i++)
 			triangle_init_random(&tris[i], width, height);
 
-		for (int g = 0; g < GENERATIONS; g++)
+		for (int g = 0; g < conf.generations; g++)
 		{
 			threadsync_dispatch(&ts);
 			threadsync_wait(&ts);
 
 			// sort triangles based on scores using bubble sort
 			// https://www.geeksforgeeks.org/bubble-sort/
-			for (int i = 0; i < POPULATION - 1; i++)
-				for (int j = 0; j < POPULATION - i - 1; j++)
+			for (int i = 0; i < population - 1; i++)
+				for (int j = 0; j < population - i - 1; j++)
 					if (scores[j] < scores[j + 1])
 					{
 						float ftmp = scores[j];
@@ -154,16 +166,13 @@ int main(int argc, char* argv[])
 
 			// create the next generation of triangles
 			// based on the best triangles of this generation
-			if (g < GENERATIONS - 1)
-				for (int i = BEST_CUTOFF; i < POPULATION; i++)
-				{
-					tris[i] = tris[i % BEST_CUTOFF];
-					triangle_mutate(
-						tris + i,
-						width,
-						height
-					);
-				}
+			if (g == conf.generations - 1)
+				break;
+			for (int i = conf.best_cutoff; i < population; i++)
+			{
+				tris[i] = tris[i % conf.best_cutoff];
+				triangle_mutate(tris + i, width, height, &conf);
+			}
 		}
 
 		// restart the iteration if there is no improvement
@@ -179,17 +188,21 @@ int main(int argc, char* argv[])
 
 		// output the current generated image so far
 		char filename[16];
-		sprintf(filename, "output_%i.png", k);
-		printf("output_%i.png -- score %f\n", k, scores[0]);
+		sprintf(filename, "%s/output_%i.png", conf.output_dir, k);
+		printf("Iteration %i -- score %f\n", k, scores[0]);
 
 		draw_triangle(result, width, tris);
 		write_img(filename, result, width, height);
 	}
 
 	// cleanup
-	threadsync_destroy(&ts);
+	if (!threadsync_destroy(&ts))
+	{
+		fprintf(stderr, "Failed to destroy ThreadSync\n");
+	}
 	free(result);
 	free(target_img);
+	config_destroy(&conf);
 
 	return 0;
 }

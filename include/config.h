@@ -1,17 +1,23 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define THREADS 8
-#define THREAD_TRIS 50
+#include <stdbool.h>
 
-#define MAX_ITERATIONS 1000
-#define GENERATIONS    100
-#define BEST_CUTOFF    20
+typedef struct {
+	int threads;
+	int thread_tris;
+	int max_iterations;
+	int generations;
+	int best_cutoff;
+	float max_pos_mut;
+	float max_clr_mut;
+	bool no_interpolate;
+	char* input_img_path;
+	char* output_dir;
+} Config;
 
-#define MUTATION_AMOUNT_POS 30
-#define MUTATION_AMOUNT_CLR 20
-
-// comment this line out to disable interpolated triangles
-#define INTERPOLATED_TRIANGLES
+bool config_init_w_args(Config* conf, int argc, char** argv);
+void config_destroy(Config* conf);
+void config_print(Config* conf);
 
 #endif

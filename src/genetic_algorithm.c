@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "config.h"
 #include "genetic_algorithm.h"
 
 #define RANDF(n) ((float) (rand() % (n)))
@@ -46,25 +45,25 @@ static void mutate(float* f, int max_mutation, int max_val)
 	*f = fminf(fmaxf(0.0f, *f), max_val);
 }
 
-void triangle_mutate(Triangle* tri, int img_width, int img_height)
+void triangle_mutate(Triangle* tri, int img_width, int img_height, Config* conf)
 {
-	mutate(&tri->x1, MUTATION_AMOUNT_POS, img_width);
-	mutate(&tri->y1, MUTATION_AMOUNT_POS, img_height);
-	mutate(&tri->x2, MUTATION_AMOUNT_POS, img_width);
-	mutate(&tri->y2, MUTATION_AMOUNT_POS, img_height);
-	mutate(&tri->x3, MUTATION_AMOUNT_POS, img_width);
-	mutate(&tri->y3, MUTATION_AMOUNT_POS, img_height);
+	mutate(&tri->x1, conf->max_pos_mut, img_width);
+	mutate(&tri->y1, conf->max_pos_mut, img_height);
+	mutate(&tri->x2, conf->max_pos_mut, img_width);
+	mutate(&tri->y2, conf->max_pos_mut, img_height);
+	mutate(&tri->x3, conf->max_pos_mut, img_width);
+	mutate(&tri->y3, conf->max_pos_mut, img_height);
 
 #ifdef INTERPOLATED_TRIANGLES
-	mutate(&tri->color1.r, MUTATION_AMOUNT_CLR, 255);
-	mutate(&tri->color1.g, MUTATION_AMOUNT_CLR, 255);
-	mutate(&tri->color1.b, MUTATION_AMOUNT_CLR, 255);
-	mutate(&tri->color2.r, MUTATION_AMOUNT_CLR, 255);
-	mutate(&tri->color2.g, MUTATION_AMOUNT_CLR, 255);
-	mutate(&tri->color2.b, MUTATION_AMOUNT_CLR, 255);
-	mutate(&tri->color3.r, MUTATION_AMOUNT_CLR, 255);
-	mutate(&tri->color3.g, MUTATION_AMOUNT_CLR, 255);
-	mutate(&tri->color3.b, MUTATION_AMOUNT_CLR, 255);
+	mutate(&tri->color1.r, conf->max_position_mutation, 255);
+	mutate(&tri->color1.g, conf->max_position_mutation, 255);
+	mutate(&tri->color1.b, conf->max_position_mutation, 255);
+	mutate(&tri->color2.r, conf->max_position_mutation, 255);
+	mutate(&tri->color2.g, conf->max_position_mutation, 255);
+	mutate(&tri->color2.b, conf->max_position_mutation, 255);
+	mutate(&tri->color3.r, conf->max_position_mutation, 255);
+	mutate(&tri->color3.g, conf->max_position_mutation, 255);
+	mutate(&tri->color3.b, conf->max_position_mutation, 255);
 #else
 	Color clr = {
 		.r = tri->color1.r,
@@ -72,9 +71,9 @@ void triangle_mutate(Triangle* tri, int img_width, int img_height)
 		.b = tri->color1.b
 	};
 
-	mutate(&clr.r, MUTATION_AMOUNT_CLR, 255);
-	mutate(&clr.g, MUTATION_AMOUNT_CLR, 255);
-	mutate(&clr.b, MUTATION_AMOUNT_CLR, 255);
+	mutate(&clr.r, conf->max_clr_mut, 255);
+	mutate(&clr.g, conf->max_clr_mut, 255);
+	mutate(&clr.b, conf->max_clr_mut, 255);
 
 	tri->color1 = clr;
 	tri->color2 = clr;
