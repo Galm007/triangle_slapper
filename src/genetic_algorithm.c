@@ -7,7 +7,7 @@
 #define RANDF(n) ((float) (rand() % (n)))
 #define RANDF_RANGE(min, max) (RANDF((max - min) * 2) - (max - min))
 
-void triangle_init_random(Triangle* tri, int img_width, int img_height)
+void triangle_init_random(Triangle* tri, int img_width, int img_height, Config* conf)
 {
 	tri->x1 = RANDF(img_width );
 	tri->y1 = RANDF(img_height);
@@ -16,27 +16,30 @@ void triangle_init_random(Triangle* tri, int img_width, int img_height)
 	tri->x3 = RANDF(img_width );
 	tri->y3 = RANDF(img_height);
 	
-#ifdef INTERPOLATED_TRIANGLES
-	tri->color1.r = RANDF(256);
-	tri->color1.g = RANDF(256);
-	tri->color1.b = RANDF(256);
-	tri->color2.r = RANDF(256);
-	tri->color2.g = RANDF(256);
-	tri->color2.b = RANDF(256);
-	tri->color3.r = RANDF(256);
-	tri->color3.g = RANDF(256);
-	tri->color3.b = RANDF(256);
-#else
-	Color clr = {
-		.r = RANDF(256),
-		.g = RANDF(256),
-		.b = RANDF(256)
-	};
+	if (conf->no_interpolate)
+	{
+		tri->color1.r = RANDF(256);
+		tri->color1.g = RANDF(256);
+		tri->color1.b = RANDF(256);
+		tri->color2.r = RANDF(256);
+		tri->color2.g = RANDF(256);
+		tri->color2.b = RANDF(256);
+		tri->color3.r = RANDF(256);
+		tri->color3.g = RANDF(256);
+		tri->color3.b = RANDF(256);
+	}
+	else
+	{
+		Color clr = {
+			.r = RANDF(256),
+			.g = RANDF(256),
+			.b = RANDF(256)
+		};
 
-	tri->color1 = clr;
-	tri->color2 = clr;
-	tri->color3 = clr;
-#endif
+		tri->color1 = clr;
+		tri->color2 = clr;
+		tri->color3 = clr;
+	}
 }
 
 static void mutate(float* f, int max_mutation, int max_val)
@@ -54,31 +57,34 @@ void triangle_mutate(Triangle* tri, int img_width, int img_height, Config* conf)
 	mutate(&tri->x3, conf->max_pos_mut, img_width);
 	mutate(&tri->y3, conf->max_pos_mut, img_height);
 
-#ifdef INTERPOLATED_TRIANGLES
-	mutate(&tri->color1.r, conf->max_position_mutation, 255);
-	mutate(&tri->color1.g, conf->max_position_mutation, 255);
-	mutate(&tri->color1.b, conf->max_position_mutation, 255);
-	mutate(&tri->color2.r, conf->max_position_mutation, 255);
-	mutate(&tri->color2.g, conf->max_position_mutation, 255);
-	mutate(&tri->color2.b, conf->max_position_mutation, 255);
-	mutate(&tri->color3.r, conf->max_position_mutation, 255);
-	mutate(&tri->color3.g, conf->max_position_mutation, 255);
-	mutate(&tri->color3.b, conf->max_position_mutation, 255);
-#else
-	Color clr = {
-		.r = tri->color1.r,
-		.g = tri->color1.g,
-		.b = tri->color1.b
-	};
+	if (conf->no_interpolate)
+	{
+		mutate(&tri->color1.r, conf->max_pos_mut, 255);
+		mutate(&tri->color1.g, conf->max_pos_mut, 255);
+		mutate(&tri->color1.b, conf->max_pos_mut, 255);
+		mutate(&tri->color2.r, conf->max_pos_mut, 255);
+		mutate(&tri->color2.g, conf->max_pos_mut, 255);
+		mutate(&tri->color2.b, conf->max_pos_mut, 255);
+		mutate(&tri->color3.r, conf->max_pos_mut, 255);
+		mutate(&tri->color3.g, conf->max_pos_mut, 255);
+		mutate(&tri->color3.b, conf->max_pos_mut, 255);
+	}
+	else
+	{
+		Color clr = {
+			.r = tri->color1.r,
+			.g = tri->color1.g,
+			.b = tri->color1.b
+		};
 
-	mutate(&clr.r, conf->max_clr_mut, 255);
-	mutate(&clr.g, conf->max_clr_mut, 255);
-	mutate(&clr.b, conf->max_clr_mut, 255);
+		mutate(&clr.r, conf->max_clr_mut, 255);
+		mutate(&clr.g, conf->max_clr_mut, 255);
+		mutate(&clr.b, conf->max_clr_mut, 255);
 
-	tri->color1 = clr;
-	tri->color2 = clr;
-	tri->color3 = clr;
-#endif
+		tri->color1 = clr;
+		tri->color2 = clr;
+		tri->color3 = clr;
+	}
 }
 
 static double image_score_at(

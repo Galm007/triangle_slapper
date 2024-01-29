@@ -7,7 +7,8 @@
 void triangle_init_random(
 	Triangle* tri,
 	int img_width,
-	int img_height
+	int img_height,
+	Config* conf
 );
 
 void triangle_mutate(
