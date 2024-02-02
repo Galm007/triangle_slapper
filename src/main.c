@@ -18,7 +18,8 @@
  * - Dynamically adjust mutation amounts
  * - Allow loading config files
  * - Add --continue option
- * - Print errors to stderr instead of stdout
+ * - Adjust triangle opacity
+ * - Use many other shapes other than triangles
  * - Add an option to use OpenCL for gpu accelerated triangle scoring
  */
 
@@ -142,7 +143,7 @@ int main(int argc, char* argv[])
 	for (int k = 0; k < conf.max_iterations; k++)
 	{
 		for (int i = 0; i < population; i++)
-			triangle_init_random(&tris[i], width, height);
+			triangle_init_random(&tris[i], width, height, &conf);
 
 		for (int g = 0; g < conf.generations; g++)
 		{
@@ -186,20 +187,19 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
-		// output the current generated image so far
-		char filename[16];
-		sprintf(filename, "%s/output_%i.png", conf.output_dir, k);
+		// draw best triangle of the iteration to result
+		draw_triangle(result, width, tris);
 		printf("Iteration %i -- score %f\n", k, scores[0]);
 
-		draw_triangle(result, width, tris);
+		// output the current generated image so far
+		char filename[64];
+		sprintf(filename, "%s/output_%i.png", conf.output_dir, k);
 		write_img(filename, result, width, height);
 	}
 
 	// cleanup
 	if (!threadsync_destroy(&ts))
-	{
 		fprintf(stderr, "Failed to destroy ThreadSync\n");
-	}
 	free(result);
 	free(target_img);
 	config_destroy(&conf);
