@@ -4,6 +4,19 @@
 #include "config.h"
 #include "triangle.h"
 
+typedef struct {
+	Color *current_img, *target_img;
+	int width, height;
+
+	Triangle* triangles;
+	double* scores;
+
+	Config* conf;
+} ScoringData;
+
+void calculate_scores(void* args, int thread_i);
+void sort_triangles(double* scores, Triangle* tris, int population);
+
 void triangle_init_random(
 	Triangle* tri,
 	int img_width,

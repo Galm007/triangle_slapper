@@ -23,33 +23,6 @@
  * - Add an option to use OpenCL for gpu accelerated triangle scoring
  */
 
-typedef struct {
-	Color *current_img, *target_img;
-	int width, height;
-
-	Triangle* triangles;
-	double* scores;
-
-	Config* conf;
-} ScoringData;
-
-void calculate_scores(void* args, int thread_i)
-{
-	ScoringData* data = args;
-
-	int start_index = data->conf->thread_tris * thread_i;
-	for (int i = 0; i < data->conf->thread_tris; i++)
-	{
-		data->scores[start_index + i] = triangle_score(
-			&data->triangles[start_index + i],
-			data->target_img,
-			data->current_img,
-			data->width,
-			data->height
-		);
-	}
-}
-
 void write_img(
 	const char* name,
 	Color* img,
@@ -150,29 +123,17 @@ int main(int argc, char* argv[])
 			threadsync_dispatch(&ts);
 			threadsync_wait(&ts);
 
-			// sort triangles based on scores using bubble sort
-			// https://www.geeksforgeeks.org/bubble-sort/
-			for (int i = 0; i < population - 1; i++)
-				for (int j = 0; j < population - i - 1; j++)
-					if (scores[j] < scores[j + 1])
-					{
-						float ftmp = scores[j];
-						scores[j] = scores[j + 1];
-						scores[j + 1] = ftmp;
-						
-						Triangle ttmp = tris[j];
-						tris[j] = tris[j + 1];
-						tris[j + 1] = ttmp;
-					}
+			sort_triangles(scores, tris, population);
+
+			if (g == conf.generations - 1)
+				break;
 
 			// create the next generation of triangles
 			// based on the best triangles of this generation
-			if (g == conf.generations - 1)
-				break;
 			for (int i = conf.best_cutoff; i < population; i++)
 			{
 				tris[i] = tris[i % conf.best_cutoff];
-				triangle_mutate(tris + i, width, height, &conf);
+				triangle_mutate(&tris[i], width, height, &conf);
 			}
 		}
 

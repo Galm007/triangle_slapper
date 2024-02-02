@@ -7,6 +7,41 @@
 #define RANDF(n) ((float) (rand() % (n)))
 #define RANDF_RANGE(min, max) (RANDF((max - min) * 2) - (max - min))
 
+void calculate_scores(void* args, int thread_i)
+{
+	ScoringData* data = args;
+
+	int start_index = data->conf->thread_tris * thread_i;
+	for (int i = 0; i < data->conf->thread_tris; i++)
+	{
+		data->scores[start_index + i] = triangle_score(
+			&data->triangles[start_index + i],
+			data->target_img,
+			data->current_img,
+			data->width,
+			data->height
+		);
+	}
+}
+
+void sort_triangles(double* scores, Triangle* tris, int population)
+{
+	// sort triangles based on scores using bubble sort
+	// https://www.geeksforgeeks.org/bubble-sort/
+	for (int i = 0; i < population - 1; i++)
+		for (int j = 0; j < population - i - 1; j++)
+			if (scores[j] < scores[j + 1])
+			{
+				float ftmp = scores[j];
+				scores[j] = scores[j + 1];
+				scores[j + 1] = ftmp;
+				
+				Triangle ttmp = tris[j];
+				tris[j] = tris[j + 1];
+				tris[j + 1] = ttmp;
+			}
+}
+
 void triangle_init_random(Triangle* tri, int img_width, int img_height, Config* conf)
 {
 	tri->x1 = RANDF(img_width );
