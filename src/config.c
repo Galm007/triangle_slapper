@@ -12,6 +12,7 @@
  * --cutoff=20		Best cutoff per generation
  * --max-pos-mut=30	Maximum position mutation between generations
  * --max-clr-mut=20	Maximum color mutation between generations
+ * --resume-from=0      Resume previous run from nth iteration
  * --no-interpolate	Don't use interpolated triangle colors
  * --output-dir=.	Output directory
  * input.png		Input image
@@ -89,6 +90,7 @@ bool config_init_w_args(Config* conf, int argc, char** argv)
 	conf->best_cutoff = 20;
 	conf->max_pos_mut = 30;
 	conf->max_clr_mut = 20;
+	conf->resume_from = 0;
 	conf->no_interpolate = true;
 	conf->output_dir = malloc(BUFFER_SIZE);
 	conf->output_dir[0] = '.';
@@ -104,6 +106,7 @@ bool config_init_w_args(Config* conf, int argc, char** argv)
 			|| parse_arg(argv[i], "--cutoff", &conf->best_cutoff, false)
 			|| parse_arg(argv[i], "--max-pos-mut", &conf->max_pos_mut, true)
 			|| parse_arg(argv[i], "--max-clr-mut", &conf->max_clr_mut, true)
+			|| parse_arg(argv[i], "--resume-from", &conf->resume_from, false)
 			|| parse_flag(argv[i], "--no-interpolate", &conf->no_interpolate)
 			|| copy_arg_value(argv[i], "--output-dir", conf->output_dir)
 		) {
@@ -138,16 +141,17 @@ void config_print(Config* conf)
 {
 	printf(
 		"---------------\n"
-		"threads:\t\t\t%d\n"
-		"triangles per thread:\t\t%d\n"
-		"max iterations:\t\t\t%d\n"
-		"generations per iteration:\t%d\n"
-		"best cutoff per generation:\t%d\n"
-		"maximum position mutation:\t%f\n"
-		"maximum color mutation:\t\t%f\n"
-		"interpolated triangles:\t\t%s\n"
-		"input image path:\t\t%s\n"
-		"output directory:\t\t%s\n"
+		"threads:                        %d\n"
+		"triangles per thread:           %d\n"
+		"max iterations:                 %d\n"
+		"generations per iteration:      %d\n"
+		"best cutoff per generation:     %d\n"
+		"maximum position mutation:      %f\n"
+		"maximum color mutation:         %f\n"
+		"resume from:                    %d\n"
+		"interpolated triangles:         %s\n"
+		"input image path:               %s\n"
+		"output directory:               %s\n"
 		"---------------\n",
 		conf->threads,
 		conf->thread_tris,
@@ -156,6 +160,7 @@ void config_print(Config* conf)
 		conf->best_cutoff,
 		conf->max_pos_mut,
 		conf->max_clr_mut,
+		conf->resume_from,
 		conf->no_interpolate ? "false" : "true",
 		conf->input_img_path,
 		conf->output_dir

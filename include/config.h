@@ -11,6 +11,7 @@ typedef struct {
 	int best_cutoff;
 	float max_pos_mut;
 	float max_clr_mut;
+	int resume_from;
 	bool no_interpolate;
 	char* input_img_path;
 	char* output_dir;

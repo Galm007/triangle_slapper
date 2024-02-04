@@ -36,6 +36,7 @@ Default configs can be overriden using command line arguments.
 * `--cutoff=20` - The number of triangles that survive per generation. The next generation's population will be based on the current generation's survivors.
 * `--max-pos-mut=30` - Maximum amount of change in a triangle's position per generation.
 * `--max-clr-mut=20` - Maximum amount of change in a triangle's color per generation.
+* `--resume-from=0` - Resume previous run from nth iteration
 * `--no-interpolate` - Do not use triangles with interpolated colors.
 * `--output-dir=.` - Where to write the output images.
 

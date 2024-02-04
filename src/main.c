@@ -15,9 +15,9 @@
 #include "config.h"
 
 /* TODO:
+ * - Check if argument values are valid
  * - Dynamically adjust mutation amounts
  * - Allow loading config files
- * - Add --continue option
  * - Adjust triangle opacity
  * - Use many other shapes other than triangles
  * - Add an option to use OpenCL for gpu accelerated triangle scoring
@@ -44,6 +44,20 @@ void write_img(
 	output_img = NULL;
 }
 
+int get_highest_iteration(char* directory)
+{
+	FILE* f;
+	for (int i = 0;; i++)
+	{
+		char filename[64];
+		sprintf(filename, "%s/output_%i.png", directory, i);
+
+		if (!(f = fopen(filename, "r")))
+			return i - 1;
+		fclose(f);
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	Config conf;
@@ -55,37 +69,37 @@ int main(int argc, char* argv[])
 	srand(time(0));
 
 	// load input image
-	Color* target_img;
 	int width, height;
-	{
-		int channels;
-		unsigned char* input_img = stbi_load(
-			conf.input_img_path,
-			&width,
-			&height,
-			&channels,
-			3
-		);
-		if (!input_img)
-		{
-			fprintf(stderr, "Failed to load image!\n");
-			exit(1);
-		}
-
-		target_img = malloc(width * height * sizeof(Color));
-		for (int i = 0; i < width * height; i++)
-		{
-			target_img[i].r = input_img[i * 3];
-			target_img[i].g = input_img[i * 3 + 1];
-			target_img[i].b = input_img[i * 3 + 2];
-		}
-
-		stbi_image_free(input_img);
-		input_img = NULL;
-	}
+	Color* target_img = img_load(conf.input_img_path, &width, &height);
 	
 	// create empty image
-	Color* result = calloc(width * height, sizeof(Color));
+	int resume_from;
+	Color* current_img;
+	{
+		int highest_iter = get_highest_iteration(conf.output_dir);
+		resume_from = conf.resume_from == 0
+			? 0
+			: conf.resume_from == -1
+				? highest_iter
+				: conf.resume_from;
+		printf("%d\n", resume_from);
+
+		if (resume_from == 0)
+		{
+			current_img = calloc(width * height, sizeof(Color));
+		}
+		else
+		{
+			char filename[64];
+			sprintf(
+				filename,
+				"%s/output_%i.png",
+				conf.output_dir,
+				resume_from
+			);
+			current_img = img_load(filename, NULL, NULL);
+		}
+	}
 
 	// prepare thread data
 	int population = conf.threads * conf.thread_tris;
@@ -93,7 +107,7 @@ int main(int argc, char* argv[])
 	double scores[population];
 
 	ScoringData data;
-	data.current_img = result;
+	data.current_img = current_img;
 	data.target_img = target_img;
 	data.width = width;
 	data.height = height;
@@ -113,17 +127,20 @@ int main(int argc, char* argv[])
 	}
 
 	// genetic algorithm
-	for (int k = 0; k < conf.max_iterations; k++)
+	for (int k = resume_from + 1; k < conf.max_iterations; k++)
 	{
+	ITERATION_START:
 		for (int i = 0; i < population; i++)
 			triangle_init_random(&tris[i], width, height, &conf);
 
-		for (int g = 0; g < conf.generations; g++)
+		for (int g = 0; ; g++)
 		{
 			threadsync_dispatch(&ts);
 			threadsync_wait(&ts);
 
 			sort_triangles(scores, tris, population);
+			if (scores[0] <= 0.0f)
+				goto ITERATION_START;
 
 			if (g == conf.generations - 1)
 				break;
@@ -137,32 +154,21 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// restart the iteration if there is no improvement
-		if (scores[0] <= 0.0)
-		{
-			printf(
-				"Iteration %i did not improve! "
-				"restarting iteration...\n",
-				k--
-			);
-			continue;
-		}
-
 		// draw best triangle of the iteration to result
-		draw_triangle(result, width, tris);
+		draw_triangle(current_img, width, tris);
 		printf("Iteration %i -- score %f\n", k, scores[0]);
 
 		// output the current generated image so far
 		char filename[64];
 		sprintf(filename, "%s/output_%i.png", conf.output_dir, k);
-		write_img(filename, result, width, height);
+		write_img(filename, current_img, width, height);
 	}
 
 	// cleanup
 	if (!threadsync_destroy(&ts))
 		fprintf(stderr, "Failed to destroy ThreadSync\n");
-	free(result);
-	free(target_img);
+	img_free(current_img);
+	img_free(target_img);
 	config_destroy(&conf);
 
 	return 0;
