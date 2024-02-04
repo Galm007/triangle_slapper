@@ -42,8 +42,13 @@ void sort_triangles(double* scores, Triangle* tris, int population)
 			}
 }
 
-void triangle_init_random(Triangle* tri, int img_width, int img_height, Config* conf)
-{
+void triangle_init_random(
+	Triangle* tri,
+	Color* target_img,
+	int img_width,
+	int img_height,
+	Config* conf
+) {
 	tri->x1 = RANDF(img_width );
 	tri->y1 = RANDF(img_height);
 	tri->x2 = RANDF(img_width );
@@ -53,15 +58,9 @@ void triangle_init_random(Triangle* tri, int img_width, int img_height, Config* 
 	
 	if (conf->no_interpolate)
 	{
-		tri->color1.r = RANDF(256);
-		tri->color1.g = RANDF(256);
-		tri->color1.b = RANDF(256);
-		tri->color2.r = RANDF(256);
-		tri->color2.g = RANDF(256);
-		tri->color2.b = RANDF(256);
-		tri->color3.r = RANDF(256);
-		tri->color3.g = RANDF(256);
-		tri->color3.b = RANDF(256);
+		tri->color1 = target_img[(int)(tri->y1 * img_width + tri->x1)];
+		tri->color2 = target_img[(int)(tri->y2 * img_width + tri->x2)];
+		tri->color3 = target_img[(int)(tri->y3 * img_width + tri->x3)];
 	}
 	else
 	{

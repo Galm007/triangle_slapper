@@ -19,6 +19,7 @@ void sort_triangles(double* scores, Triangle* tris, int population);
 
 void triangle_init_random(
 	Triangle* tri,
+	Color* target_img,
 	int img_width,
 	int img_height,
 	Config* conf

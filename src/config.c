@@ -72,6 +72,20 @@ static bool parse_flag(char* arg, const char* arg_name, bool* dest_value)
 	return false;
 }
 
+static int get_highest_iteration(char* directory)
+{
+	FILE* f;
+	for (int i = 0;; i++)
+	{
+		char filename[64];
+		sprintf(filename, "%s/output_%i.png", directory, i);
+
+		if (!(f = fopen(filename, "r")))
+			return i - 1;
+		fclose(f);
+	}
+}
+
 bool config_init_w_args(Config* conf, int argc, char** argv)
 {
 	// parse input file (required)
@@ -122,6 +136,13 @@ bool config_init_w_args(Config* conf, int argc, char** argv)
 			return false;
 		}
 	}
+
+	int highest_iter = get_highest_iteration(conf->output_dir);
+	conf->resume_from = conf->resume_from == 0 || highest_iter == -1
+		? 0
+		: conf->resume_from == -1
+			? highest_iter
+			: conf->resume_from;
 
 	// get rid of the extra '/' at the end of the output directory
 	int output_len = strlen(conf->output_dir);

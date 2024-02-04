@@ -44,20 +44,6 @@ void write_img(
 	output_img = NULL;
 }
 
-int get_highest_iteration(char* directory)
-{
-	FILE* f;
-	for (int i = 0;; i++)
-	{
-		char filename[64];
-		sprintf(filename, "%s/output_%i.png", directory, i);
-
-		if (!(f = fopen(filename, "r")))
-			return i - 1;
-		fclose(f);
-	}
-}
-
 int main(int argc, char* argv[])
 {
 	Config conf;
@@ -73,32 +59,21 @@ int main(int argc, char* argv[])
 	Color* target_img = img_load(conf.input_img_path, &width, &height);
 	
 	// create empty image
-	int resume_from;
 	Color* current_img;
+	if (conf.resume_from == 0)
 	{
-		int highest_iter = get_highest_iteration(conf.output_dir);
-		resume_from = conf.resume_from == 0
-			? 0
-			: conf.resume_from == -1
-				? highest_iter
-				: conf.resume_from;
-		printf("%d\n", resume_from);
-
-		if (resume_from == 0)
-		{
-			current_img = calloc(width * height, sizeof(Color));
-		}
-		else
-		{
-			char filename[64];
-			sprintf(
-				filename,
-				"%s/output_%i.png",
-				conf.output_dir,
-				resume_from
-			);
-			current_img = img_load(filename, NULL, NULL);
-		}
+		current_img = calloc(width * height, sizeof(Color));
+	}
+	else
+	{
+		char filename[64];
+		sprintf(
+			filename,
+			"%s/output_%i.png",
+			conf.output_dir,
+			conf.resume_from
+		);
+		current_img = img_load(filename, NULL, NULL);
 	}
 
 	// prepare thread data
@@ -127,11 +102,17 @@ int main(int argc, char* argv[])
 	}
 
 	// genetic algorithm
-	for (int k = resume_from + 1; k < conf.max_iterations; k++)
+	for (int k = conf.resume_from; k < conf.max_iterations; k++)
 	{
 	ITERATION_START:
 		for (int i = 0; i < population; i++)
-			triangle_init_random(&tris[i], width, height, &conf);
+			triangle_init_random(
+				&tris[i],
+				target_img,
+				width,
+				height,
+				&conf
+			);
 
 		for (int g = 0; ; g++)
 		{
