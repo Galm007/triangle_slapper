@@ -21,4 +21,6 @@ bool config_init_w_args(Config* conf, int argc, char** argv);
 void config_destroy(Config* conf);
 void config_print(Config* conf);
 
+int get_highest_iteration(char* directory);
+
 #endif

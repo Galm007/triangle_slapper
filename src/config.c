@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "config.h"
 
 /*
@@ -72,6 +73,31 @@ static bool parse_flag(char* arg, const char* arg_name, bool* dest_value)
 	return false;
 }
 
+#define VALIDATE(cmp, err_msg) \
+	if (!(cmp)) { fprintf(stderr, "Error: %s\n", err_msg); return false; }
+
+static bool config_validate(Config* conf)
+{
+	VALIDATE(conf->threads > 0, "--threads must be at least 1");
+	VALIDATE(conf->thread_tris > 0, "--thread-tris must be at least 1");
+	VALIDATE(conf->max_iterations > 0, "--max-iter must be at least 1");
+	VALIDATE(conf->generations > 0, "--generations must be at least 1");
+	VALIDATE(conf->best_cutoff > 0, "--cutoff must be at least 1");
+	VALIDATE(conf->max_pos_mut > 0, "--max-pos-mut must be at least 1");
+	VALIDATE(conf->max_clr_mut > 0, "--max-pos-clr must be at least 1");
+	VALIDATE(conf->resume_from >= -1, "--resume-from must be at least -1");
+
+	struct stat stats;
+	stat(conf->output_dir, &stats);
+	if (!S_ISDIR(stats.st_mode))
+	{
+		fprintf(stderr, "Error: --output-dir is not a valid path\n");
+		return false;
+	}
+
+	return true;
+}
+
 bool config_init_w_args(Config* conf, int argc, char** argv)
 {
 	// parse input file (required)
@@ -128,7 +154,7 @@ bool config_init_w_args(Config* conf, int argc, char** argv)
 	if (conf->output_dir[output_len - 1] == '/')
 		conf->output_dir[output_len - 1] = '\0';
 
-	return true;
+	return config_validate(conf);
 }
 
 void config_destroy(Config* conf)
@@ -148,7 +174,7 @@ void config_print(Config* conf)
 		"best cutoff per generation:     %d\n"
 		"maximum position mutation:      %f\n"
 		"maximum color mutation:         %f\n"
-		"resume from:                    %d\n"
+		"resume from iteration:          %d\n"
 		"interpolated triangles:         %s\n"
 		"input image path:               %s\n"
 		"output directory:               %s\n"
@@ -160,9 +186,25 @@ void config_print(Config* conf)
 		conf->best_cutoff,
 		conf->max_pos_mut,
 		conf->max_clr_mut,
-		conf->resume_from,
+		conf->resume_from == -1
+			? get_highest_iteration(conf->output_dir)
+			: conf->resume_from,
 		conf->no_interpolate ? "false" : "true",
 		conf->input_img_path,
 		conf->output_dir
 	);
+}
+
+int get_highest_iteration(char* directory)
+{
+	FILE* f;
+	for (int i = 0;; i++)
+	{
+		char filename[64];
+		sprintf(filename, "%s/output_%i.png", directory, i);
+
+		if (!(f = fopen(filename, "r")))
+			return i - 1 < 0 ? 0 : i - 1;
+		fclose(f);
+	}
 }

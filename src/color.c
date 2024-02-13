@@ -35,7 +35,7 @@ Color* img_load(char* filename, int* width, int* height)
 	unsigned char* input_img = stbi_load(filename, &w, &h, &channels, 3);
 	if (!input_img)
 	{
-		fprintf(stderr, "Failed to load image!\n");
+		fprintf(stderr, "Failed to load image \"%s\"\n", filename);
 		return NULL;
 	}
 

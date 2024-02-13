@@ -15,7 +15,6 @@
 #include "config.h"
 
 /* TODO:
- * - Check if argument values are valid
  * - Dynamically adjust mutation amounts
  * - Allow loading config files
  * - Adjust triangle opacity
@@ -44,20 +43,6 @@ void write_img(
 	output_img = NULL;
 }
 
-int get_highest_iteration(char* directory)
-{
-	FILE* f;
-	for (int i = 0;; i++)
-	{
-		char filename[64];
-		sprintf(filename, "%s/output_%i.png", directory, i);
-
-		if (!(f = fopen(filename, "r")))
-			return i - 1;
-		fclose(f);
-	}
-}
-
 int main(int argc, char* argv[])
 {
 	Config conf;
@@ -71,18 +56,39 @@ int main(int argc, char* argv[])
 	// load input image
 	int width, height;
 	Color* target_img = img_load(conf.input_img_path, &width, &height);
+	if (!target_img)
+		return 1;
 	
 	// create empty image
 	int resume_from;
 	Color* current_img;
 	{
 		int highest_iter = get_highest_iteration(conf.output_dir);
-		resume_from = conf.resume_from == 0
-			? 0
-			: conf.resume_from == -1
-				? highest_iter
-				: conf.resume_from;
-		printf("%d\n", resume_from);
+		resume_from = conf.resume_from == -1
+			? highest_iter
+			: conf.resume_from;
+
+		if (resume_from > highest_iter)
+		{
+			fprintf(
+				stderr,
+				"Error: resuming from iteration greater than"
+				" previous highest iteration (%d)\n"
+				"Consider using --resume-from=-1 to start"
+				" from the highest available iteration\n",
+				highest_iter
+			);
+			return 1;
+		}
+		if (conf.max_iterations < resume_from)
+		{
+			fprintf(
+				stderr,
+				"Error: resuming from iteration"
+				" greater than --max-iter\n"
+			);
+			return 1;
+		}
 
 		if (resume_from == 0)
 		{
