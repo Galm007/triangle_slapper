@@ -8,7 +8,7 @@ Note: This program does everything in cpu. So it will be slow compared to if it 
 
 ## Preview
 
-![](./preview.mp4)
+https://github.com/user-attachments/assets/874e1f5d-da1a-495d-bb0c-92b04d5251c5
 
 ```
 ./TriangleSlapper --threads=4 my_image.png
