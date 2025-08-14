@@ -7,7 +7,8 @@ The algorithm spawns random triangles, selects the best ones based on their calc
 Note: This program does everything in cpu. So it will be slow compared to if it was hardware accelerated in gpu.
 
 ## Preview
-![](./preview.gif)
+
+https://github.com/user-attachments/assets/874e1f5d-da1a-495d-bb0c-92b04d5251c5
 
 ```
 ./TriangleSlapper --threads=4 my_image.png
@@ -16,9 +17,11 @@ Note: This program does everything in cpu. So it will be slow compared to if it 
 ^^ Each iteration in this example took my laptop about a minute to finish (Intel core i7 8th gen). It is not realtime.
 
 ## Compiling
+
 This project uses cmake so the build process varies for different operating systems.
 
 For Linux:
+
 ```
 git clone https://github.com/Nyaaboron/triangle_slapper.git && cd triangle_slapper
 mkdir build && cd build
