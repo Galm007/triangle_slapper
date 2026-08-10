@@ -198,7 +198,7 @@ void config_print(Config* conf)
 int get_highest_iteration(char* directory)
 {
 	FILE* f;
-	for (int i = 0;; i++)
+	for (int i = 1;; i++)
 	{
 		char filename[64];
 		sprintf(filename, "%s/output_%i.png", directory, i);
