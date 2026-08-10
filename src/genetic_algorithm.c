@@ -163,7 +163,7 @@ double triangle_score(
 	
 	// calculate bounding box of triangle
 	// https://stackoverflow.com/a/39974397
-	int xmin, xmax, ymin, ymax;
+	int xmin, xmax, ymin, ymax, area;
 	{
 		int x1 = tri->x1, x2 = tri->x2, x3 = tri->x3;
 		int y1 = tri->y1, y2 = tri->y2, y3 = tri->y3;
@@ -172,6 +172,7 @@ double triangle_score(
 		ymax = y1 > y2 ? y1 > y3 ? y1 : y3 : y2 > y3 ? y2 : y3;
 		xmin = x1 < x2 ? x1 < x3 ? x1 : x3 : x2 < x3 ? x2 : x3;
 		ymin = y1 < y2 ? y1 < y3 ? y1 : y3 : y2 < y3 ? y2 : y3;
+		area = 0.5f * abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
 	}
 	
 	// calculate scores
@@ -197,5 +198,5 @@ double triangle_score(
 	free(test_img);
 	test_img = NULL;
 	
-	return test_score - current_score;
+	return (test_score - current_score) * area * area;
 }
