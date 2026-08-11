@@ -17,4 +17,15 @@ void draw_triangle(
 	Triangle* tri
 );
 
+// Sum, over the pixels the triangle covers, of how much closer to the target
+// the canvas gets by painting it: positive means an improvement. Equivalent to
+// drawing onto a copy of `current` and comparing per-pixel distance to
+// `target`, but without allocating or copying the canvas.
+double triangle_score_delta(
+	Triangle* tri,
+	const Color* target,
+	const Color* current,
+	int canvas_width
+);
+
 #endif

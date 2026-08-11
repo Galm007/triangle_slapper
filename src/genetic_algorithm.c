@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include "genetic_algorithm.h"
 
@@ -122,28 +120,6 @@ void triangle_mutate(Triangle* tri, int img_width, int img_height, Config* conf)
 	}
 }
 
-static double image_score_at(
-	Color* target_img,
-	Color* img,
-	int img_width,
-	int xmin,
-	int xmax,
-	int ymin,
-	int ymax
-) {
-	double score = 0.0;
-	for (unsigned y = ymin; y < ymax; ++y)
-		for (unsigned x = xmin; x < xmax; ++x)
-		{
-			const unsigned i = y * img_width + x;
-
-			score += fabsf(target_img[i].r - img[i].r)
-				+ fabsf(target_img[i].g - img[i].g)
-				+ fabsf(target_img[i].b - img[i].b);
-		}
-	return 255.0f * (ymax - ymin) * (xmax - xmin) - score;
-}
-
 double triangle_score(
 	Triangle* tri,
 	Color* target_img,
@@ -151,52 +127,16 @@ double triangle_score(
 	int img_width,
 	int img_height)
 {
-	// draw triangle on a test image
-	Color* test_img = malloc(
-		img_width * img_height * sizeof(Color));
-	memcpy(
-		test_img,
-		current_img,
-		img_width * img_height * sizeof(Color)
-	);
-	draw_triangle(test_img, img_width, tri);
-	
-	// calculate bounding box of triangle
+	// how much painting this triangle improves the canvas, summed over the
+	// pixels it actually covers -- no full-image copy needed
+	double delta = triangle_score_delta(
+		tri, target_img, current_img, img_width);
+
+	// triangle area, to bias selection toward larger triangles
 	// https://stackoverflow.com/a/39974397
-	int xmin, xmax, ymin, ymax, area;
-	{
-		int x1 = tri->x1, x2 = tri->x2, x3 = tri->x3;
-		int y1 = tri->y1, y2 = tri->y2, y3 = tri->y3;
+	int x1 = tri->x1, x2 = tri->x2, x3 = tri->x3;
+	int y1 = tri->y1, y2 = tri->y2, y3 = tri->y3;
+	int area = 0.5f * abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
 
-		xmax = x1 > x2 ? x1 > x3 ? x1 : x3 : x2 > x3 ? x2 : x3;
-		ymax = y1 > y2 ? y1 > y3 ? y1 : y3 : y2 > y3 ? y2 : y3;
-		xmin = x1 < x2 ? x1 < x3 ? x1 : x3 : x2 < x3 ? x2 : x3;
-		ymin = y1 < y2 ? y1 < y3 ? y1 : y3 : y2 < y3 ? y2 : y3;
-		area = 0.5f * abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
-	}
-	
-	// calculate scores
-	double test_score = image_score_at(
-		target_img,
-		test_img,
-		img_width,
-		xmin,
-		xmax,
-		ymin,
-		ymax
-	);
-	double current_score = image_score_at(
-		target_img,
-		current_img,
-		img_width,
-		xmin,
-		xmax,
-		ymin,
-		ymax
-	);
-
-	free(test_img);
-	test_img = NULL;
-	
-	return (test_score - current_score) * area * area;
+	return delta * area * area;
 }
